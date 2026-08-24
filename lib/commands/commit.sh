@@ -6,17 +6,18 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 source "$TOOLS_DIR/lib/core/messages.sh"
+source "$TOOLS_DIR/lib/core/repositories.sh"
 
 usage() {
   cat <<'EOF'
-Usage: iasi-dev commit -m "message" [repository...]
+Usage: iasi-dev commit -m "message" [project...]
 
 Stages all changes, creates a commit, and pushes it to the configured remote.
-Without a repository, all Git repositories directly below the current directory
-are processed. With a repository directory, only that repository is processed.
+Without a repository, Git repositories directly below the current directory are
+selected.
 
 Arguments:
-  repository   Optional repository directory or path
+  project      Optional Git repository directory or path
 
 Options:
   -m, --message MESSAGE
@@ -113,7 +114,7 @@ fi
 {
   printf "IASI commit started at %s\n" "$(date --iso-8601=seconds)"
   printf "Workspace: %s\n" "$workspace_dir"
-  printf "Repositories: %s\n" "${repository_arguments[*]:-all}"
+  printf "Projects: %s\n" "${repository_arguments[*]:-all}"
   printf "Message: %s\n\n" "$commit_message"
 } > "$log_file"
 
@@ -156,4 +157,4 @@ for repository in "${repositories[@]}"; do
   success_detail "$name publicado."
 done
 
-success "$committed repositorio(s) confirmado(s) y publicado(s); $unchanged sin cambios."
+success "$committed proyecto(s) confirmado(s) y publicado(s); $unchanged sin cambios."

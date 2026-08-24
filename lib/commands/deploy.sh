@@ -6,20 +6,22 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 source "$TOOLS_DIR/lib/core/messages.sh"
+source "$TOOLS_DIR/lib/core/repositories.sh"
 
 usage() {
   cat <<'EOF'
-Usage: iasi-dev deploy [-f|--full] [-m|--message "message"] [repository...]
+Usage: iasi-dev deploy [-f|--full] [-m|--message "message"] [project...]
 
-Commits the current repository state and pushes it. With --full, each IASI
-Quarto repository runs its own incremental deploy before the commit and push.
+Commits the current project state and pushes it. With --full, repositories
+managed by IASI Quarto (`_iasi.yml`) run their own incremental deploy before
+the normal commit and push. Other repositories keep the normal Git flow.
 
 Arguments:
-  repository   Optional repository or workspace directory; current directory
+  project      Optional project or workspace directory; current directory
                by default
 
 Options:
-  -f, --full   Run each repository deploy before committing and pushing
+  -f, --full   Run each project deploy before committing and pushing
   -m, --message MESSAGE
                Base commit message; "deploy" by default
   -v           Show detailed information, including success messages
@@ -95,7 +97,7 @@ TARGET_DIR="$(cd -- "$target" && pwd)"
 if [ -n "$target_argument" ]; then
   info "Desplegando $(basename -- "$TARGET_DIR")."
 else
-  info "Desplegando todos los repositorios."
+  info "Desplegando todos los proyectos."
 fi
 
 repositories=()
@@ -129,54 +131,34 @@ mkdir -p -- "$LOG_DIR"
   printf "Message: %s\n\n" "$commit_message"
 } > "$LOG_FILE"
 
-repository_has_quarto() {
-  local repository="$1"
-  local match=""
-
-  match="$(
-    find "$repository" \
-      -path '*/.git' -prune -o \
-      -path '*/.quarto' -prune -o \
-      -path '*/publish' -prune -o \
-      -path '*/.codex*' -prune -o \
-      -path '*/tests' -prune -o \
-      -path '*/node_modules' -prune -o \
-      -path '*/renv' -prune -o \
-      -type f -name '_quarto.yml' -print -quit
-  )"
-
-  [ -n "$match" ]
-}
-
 commits=0
 
 for repository in "${repositories[@]}"; do
   name="$(basename -- "$repository")"
-  printf "[%s]\n" "$name" >> "$LOG_FILE"
+  {
+    printf "============================================================\n"
+    printf "PROJECT: %s\n" "$name"
+    printf "============================================================\n"
+  } >> "$LOG_FILE"
 
-  if [ "$full" -eq 1 ]; then
-    if repository_has_quarto "$repository"; then
-      printf "DEBUG iasi-dev deploy | repository = %s | quarto = TRUE\n" "$name" >> "$LOG_FILE"
-      info "Ejecutando deploy de $name."
+  if [ "$full" -eq 1 ] && repository_has_iasi_project "$repository"; then
+    info "Ejecutando deploy de $name."
 
-      if IASI_QUARTO_OPERATION=deploy \
-        IASI_LOG_FILE="$LOG_FILE" \
-        "$TOOLS_DIR/lib/commands/publish.sh" "$repository"; then
-        printf "DEBUG iasi-dev deploy | repository = %s | deploy_exit = 0\n" "$name" >> "$LOG_FILE"
-      else
-        deploy_rc=$?
-        printf "DEBUG iasi-dev deploy | repository = %s | deploy_exit = %s\n" "$name" "$deploy_rc" >> "$LOG_FILE"
-        error "Falló el deploy de $name."
-        warning "Consulta el log: $LOG_FILE"
-        exit "$deploy_rc"
-      fi
+    if IASI_QUARTO_OPERATION=deploy \
+      IASI_LOG_FILE="$LOG_FILE" \
+      "$TOOLS_DIR/lib/commands/publish.sh" "$repository"; then
+      :
     else
-      printf "DEBUG iasi-dev deploy | repository = %s | quarto = FALSE | deploy = SKIP\n" "$name" >> "$LOG_FILE"
-      detail "$name no contiene proyectos Quarto; deploy omitido."
+      deploy_rc=$?
+      printf "PROJECT RESULT: FAILED (exit %s)\n\n" "$deploy_rc" >> "$LOG_FILE"
+      error "Falló el deploy de $name."
+      warning "Consulta el log: $LOG_FILE"
+      exit "$deploy_rc"
     fi
   fi
 
   if ! git -C "$repository" add -A -- . >> "$LOG_FILE" 2>&1; then
+    printf "PROJECT RESULT: FAILED (git add)\n\n" >> "$LOG_FILE"
     error "No se pudieron preparar los cambios de $name."
     warning "Consulta el log: $LOG_FILE"
     exit 1
@@ -186,6 +168,7 @@ for repository in "${repositories[@]}"; do
     detail "$name no tiene cambios."
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then
+      printf "PROJECT RESULT: FAILED (git commit)\n\n" >> "$LOG_FILE"
       error "No se pudo crear el commit de $name."
       warning "Consulta el log: $LOG_FILE"
       exit 1
@@ -194,12 +177,13 @@ for repository in "${repositories[@]}"; do
   fi
 
   if ! git -C "$repository" push >> "$LOG_FILE" 2>&1; then
+    printf "PROJECT RESULT: FAILED (git push)\n\n" >> "$LOG_FILE"
     error "No se pudieron subir los commits de $name."
     warning "Consulta el log: $LOG_FILE"
     exit 1
   fi
 
-  printf "\n" >> "$LOG_FILE"
+  printf "PROJECT RESULT: OK\n\n" >> "$LOG_FILE"
   success_detail "$name desplegado."
 done
 

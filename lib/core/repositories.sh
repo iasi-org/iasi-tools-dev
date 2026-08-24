@@ -13,3 +13,22 @@ iasi_repositories() {
     --json name,sshUrl,defaultBranchRef \
     --jq '.[] | "\(.name)|\(.sshUrl)|\(.defaultBranchRef.name)"'
 }
+
+repository_has_iasi_project() {
+  local repository="$1"
+  local match=""
+
+  match="$(
+    find "$repository" \
+      -path '*/.git' -prune -o \
+      -path '*/.quarto' -prune -o \
+      -path '*/publish' -prune -o \
+      -path '*/.codex*' -prune -o \
+      -path '*/tests' -prune -o \
+      -path '*/node_modules' -prune -o \
+      -path '*/renv' -prune -o \
+      -type f -name '_iasi.yml' -print -quit
+  )"
+
+  [ -n "$match" ]
+}

@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 source "$TOOLS_DIR/lib/core/messages.sh"
+source "$TOOLS_DIR/lib/core/repositories.sh"
 
 operation="${IASI_QUARTO_OPERATION:-publish}"
 
@@ -18,14 +19,14 @@ usage() {
   case "$operation" in
     build)
       cat <<'EOF'
-Usage: iasi-dev build [repository...]
+Usage: iasi-dev build [project...]
 
-Recursively finds repositories containing IASI Quarto projects, then runs
-iasi.quarto::build() once at each repository root. Directories named tests are
-excluded from discovery.
+Recursively finds IASI projects identified by `_iasi.yml`, then runs
+iasi.quarto::build() once at each project repository root. Directories named
+tests are excluded from discovery.
 
 Arguments:
-  repository  Repository or directory to search; current directory by default
+  project     IASI project or directory to search; current directory by default
 
 Options:
   -v           Show detailed information, including success messages
@@ -34,15 +35,15 @@ EOF
       ;;
     publish)
       cat <<'EOF'
-Usage: iasi-dev publish [repository...]
+Usage: iasi-dev publish [project...]
 
-Recursively finds repositories containing IASI Quarto projects, then runs
-iasi.quarto::publish() once at each repository root.
+Recursively finds IASI projects identified by `_iasi.yml`, then runs
+iasi.quarto::publish() once at each project repository root.
 Multiproject repositories are assembled into a single root publish/ directory.
 Directories named tests are excluded from discovery.
 
 Arguments:
-  repository  Repository or directory to search; current directory by default
+  project     IASI project or directory to search; current directory by default
 
 Options:
   -v           Show detailed information, including success messages
@@ -51,9 +52,9 @@ EOF
       ;;
     deploy)
       cat <<'EOF'
-Internal usage: IASI_QUARTO_OPERATION=deploy publish.sh [repository...]
+Internal usage: IASI_QUARTO_OPERATION=deploy publish.sh [project...]
 
-Runs iasi.quarto::deploy() once at each discovered IASI Quarto repository.
+Runs iasi.quarto::deploy() once at each discovered IASI project.
 This operation is used internally by `iasi-dev deploy --full`.
 EOF
       ;;
@@ -179,16 +180,16 @@ fi
 
 repositories=()
 
-if [ -f "$SEARCH_DIR/_quarto.yml" ] && [ -f "$SEARCH_DIR/_iasi.yml" ]; then
+if [ -f "$SEARCH_DIR/_iasi.yml" ]; then
   repositories+=("$SEARCH_DIR")
-elif [ -n "$SEARCH_REPOSITORY" ] && [ "$SEARCH_DIR" != "$SEARCH_REPOSITORY" ]; then
-  # Keep an explicitly selected nested directory as the processing scope.
+elif [ -n "$SEARCH_REPOSITORY" ] && [ "$SEARCH_DIR" != "$SEARCH_REPOSITORY" ] && repository_has_iasi_project "$SEARCH_DIR"; then
+  # Keep an explicitly selected nested IASI project as the processing scope.
   # iasi.quarto will discover any publications below it without expanding the
   # operation to the enclosing repository.
   repositories+=("$SEARCH_DIR")
 else
-  while IFS= read -r -d '' quarto_file; do
-    project_dir="$(dirname -- "$quarto_file")"
+  while IFS= read -r -d '' iasi_file; do
+    project_dir="$(dirname -- "$iasi_file")"
 
     repository_dir="$project_dir"
     ancestor="$project_dir"
@@ -224,18 +225,17 @@ else
       -path '*/tests' -prune -o \
       -path '*/node_modules' -prune -o \
       -path '*/renv' -prune -o \
-      -type f -name '_quarto.yml' -print0
+      -type f -name '_iasi.yml' -print0
   )
 fi
 
 if [ "${#repositories[@]}" -eq 0 ]; then
   if [ "$operation" = "deploy" ]; then
-    printf "DEBUG iasi-dev deploy | directory = %s | quarto_projects = 0 | deploy = SKIP\n" "$SEARCH_DIR" >> "$LOG_FILE"
-    detail "No hay proyectos Quarto en $(basename -- "$SEARCH_DIR"); deploy omitido."
+    detail "No hay proyectos IASI en $(basename -- "$SEARCH_DIR"); deploy omitido."
     exit 0
   fi
 
-  error "No se encontraron proyectos con _quarto.yml en $SEARCH_DIR."
+  error "No se encontraron proyectos con _iasi.yml en $SEARCH_DIR."
   exit 1
 fi
 
@@ -259,8 +259,8 @@ for repository_dir in "${repositories[@]}"; do
   printf "[%s]\n" "$repository_dir" >> "$LOG_FILE"
 
   subprojects=()
-  while IFS= read -r -d '' quarto_file; do
-    project_dir="$(dirname -- "$quarto_file")"
+  while IFS= read -r -d '' iasi_file; do
+    project_dir="$(dirname -- "$iasi_file")"
 
     if [ "$project_dir" != "$repository_dir" ]; then
       subprojects+=("${project_dir#"$repository_dir"/}")
@@ -274,11 +274,11 @@ for repository_dir in "${repositories[@]}"; do
       -path '*/tests' -prune -o \
       -path '*/node_modules' -prune -o \
       -path '*/renv' -prune -o \
-      -type f -name '_quarto.yml' -print0
+      -type f -name '_iasi.yml' -print0
   )
 
   if [ "${#subprojects[@]}" -gt 0 ]; then
-    info "Subproyectos Quarto:"
+    info "Subproyectos IASI:"
     printf "Subprojects:\n" >> "$LOG_FILE"
 
     for subproject in "${subprojects[@]}"; do
@@ -295,16 +295,14 @@ for repository_dir in "${repositories[@]}"; do
     rscript_rc=0
   else
     rscript_rc=$?
-    printf "DEBUG iasi-dev %s | repository = %s | rscript_exit = %s\n" "$operation" "$repository_name" "$rscript_rc" >> "$LOG_FILE"
     error "No se pudo ejecutar $operation: $repository_dir"
     warning "Consulta el log: $LOG_FILE"
     exit "$rscript_rc"
   fi
 
-  printf "DEBUG iasi-dev %s | repository = %s | rscript_exit = %s\n" "$operation" "$repository_name" "$rscript_rc" >> "$LOG_FILE"
 
   printf "\n" >> "$LOG_FILE"
   success_detail "$repository_name: $operation completado."
 done
 
-success "${#repositories[@]} repositorio(s) Quarto: $operation completado."
+success "${#repositories[@]} proyecto(s) IASI: $operation completado."
