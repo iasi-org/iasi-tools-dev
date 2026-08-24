@@ -142,7 +142,6 @@ for repository in "${repositories[@]}"; do
   } >> "$LOG_FILE"
 
   if [ "$full" -eq 1 ] && repository_has_iasi_project "$repository"; then
-    info "Ejecutando deploy de $name."
 
     if IASI_QUARTO_OPERATION=deploy \
       IASI_LOG_FILE="$LOG_FILE" \
