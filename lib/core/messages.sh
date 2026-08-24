@@ -57,5 +57,6 @@ confirm() {
 }
 
 error() {
+  [ "$IASI_VERBOSITY" -ge 1 ] || return 0
   _message "$_IASI_RED" "$1" >&2
 }

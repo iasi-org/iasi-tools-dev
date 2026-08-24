@@ -22,12 +22,14 @@ Arguments:
 Options:
   -m, --message MESSAGE
                Required commit message
-  -v           Show detailed information, including success messages
+  -v           Show detailed operational and success messages
+  -s           Silent mode; show no messages
   -h, --help   Show this help
 EOF
 }
 
 commit_message=""
+silent=0
 repository_arguments=()
 
 while [ "$#" -gt 0 ]; do
@@ -45,7 +47,14 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     -v)
-      IASI_VERBOSITY=2
+      if [ "$silent" -eq 0 ]; then
+        IASI_VERBOSITY=2
+      fi
+      shift
+      ;;
+    -s)
+      silent=1
+      IASI_VERBOSITY=0
       shift
       ;;
     --message=*)
@@ -63,6 +72,8 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+export IASI_VERBOSITY
 
 if [ -z "$commit_message" ]; then
   error "El mensaje del commit es obligatorio; usa -m o --message."
@@ -133,7 +144,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if git -C "$repository" diff --cached --quiet >> "$log_file" 2>&1; then
-    :
+    detail "$name no tiene cambios."
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
@@ -151,7 +162,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   printf "\n" >> "$log_file"
-  success_detail "$name publicado."
+  success_detail "$name desplegado."
 done
 
 success "$committed proyecto(s) confirmado(s) y publicado(s)."

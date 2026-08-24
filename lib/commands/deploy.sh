@@ -24,13 +24,15 @@ Options:
   -f, --full   Run each project deploy before committing and pushing
   -m, --message MESSAGE
                Base commit message; "deploy" by default
-  -v           Show detailed information, including success messages
+  -v           Show detailed operational and success messages
+  -s           Silent mode; show no messages
   -h, --help   Show this help
 EOF
 }
 
 full=0
 commit_message="deploy"
+silent=0
 target_arguments=()
 
 while [ "$#" -gt 0 ]; do
@@ -52,7 +54,14 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     -v)
-      IASI_VERBOSITY=2
+      if [ "$silent" -eq 0 ]; then
+        IASI_VERBOSITY=2
+      fi
+      shift
+      ;;
+    -s)
+      silent=1
+      IASI_VERBOSITY=0
       shift
       ;;
     --message=*)
@@ -74,6 +83,8 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+export IASI_VERBOSITY
 
 if [ "${#target_arguments[@]}" -gt 1 ]; then
   for selected_target in "${target_arguments[@]}"; do
@@ -164,7 +175,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if git -C "$repository" diff --cached --quiet >> "$LOG_FILE" 2>&1; then
-    :
+    detail "$name no tiene cambios."
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then
       printf "PROJECT RESULT: FAILED (git commit)\n\n" >> "$LOG_FILE"
@@ -182,6 +193,7 @@ for repository in "${repositories[@]}"; do
     exit 1
   fi
 
+  success_detail "$name desplegado."
   printf "PROJECT RESULT: OK\n\n" >> "$LOG_FILE"
 done
 

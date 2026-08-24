@@ -29,7 +29,8 @@ Arguments:
   project     IASI project or directory to search; current directory by default
 
 Options:
-  -v           Show detailed information, including success messages
+  -v           Show detailed operational and success messages
+  -s           Silent mode; show no messages
   -h, --help  Show this help
 EOF
       ;;
@@ -46,7 +47,8 @@ Arguments:
   project     IASI project or directory to search; current directory by default
 
 Options:
-  -v           Show detailed information, including success messages
+  -v           Show detailed operational and success messages
+  -s           Silent mode; show no messages
   -h, --help  Show this help
 EOF
       ;;
@@ -60,6 +62,7 @@ EOF
       ;;
   esac
 }
+silent=0
 search_arguments=()
 
 while [ "$#" -gt 0 ]; do
@@ -69,7 +72,14 @@ while [ "$#" -gt 0 ]; do
       exit 0
       ;;
     -v)
-      IASI_VERBOSITY=2
+      if [ "$silent" -eq 0 ]; then
+        IASI_VERBOSITY=2
+      fi
+      shift
+      ;;
+    -s)
+      silent=1
+      IASI_VERBOSITY=0
       shift
       ;;
     -*)
@@ -83,6 +93,8 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+export IASI_VERBOSITY
 
 if [ "${#search_arguments[@]}" -gt 1 ]; then
   for selected_target in "${search_arguments[@]}"; do
