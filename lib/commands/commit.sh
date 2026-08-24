@@ -10,7 +10,7 @@ source "$TOOLS_DIR/lib/core/repositories.sh"
 
 usage() {
   cat <<'EOF'
-Usage: iasi-dev commit -m "message" [project...]
+Usage: iasi-dev commit [--force] -m "message" [project...]
 
 Stages all changes, creates a commit, and publishes it using the configured VCS.
 Without a repository, projects directly below the IASI workspace that contains
@@ -22,6 +22,7 @@ Arguments:
 Options:
   -m, --message MESSAGE
                Required commit message
+  --force      Force the IASI commit flow; never means VCS force-push
   -v           Show detailed operational and success messages
   -s           Silent mode; show no messages
   -h, --help   Show this help
@@ -29,6 +30,7 @@ EOF
 }
 
 commit_message=""
+force=0
 silent=0
 repository_arguments=()
 
@@ -37,6 +39,10 @@ while [ "$#" -gt 0 ]; do
     -h|--help)
       usage
       exit 0
+      ;;
+    --force)
+      force=1
+      shift
       ;;
     -m|--message)
       if [ "$#" -lt 2 ] || [ -z "$2" ]; then
@@ -126,7 +132,8 @@ fi
   printf "IASI commit started at %s\n" "$(date --iso-8601=seconds)"
   printf "Workspace: %s\n" "$workspace_dir"
   printf "Projects: %s\n" "${repository_arguments[*]:-all}"
-  printf "Message: %s\n\n" "$commit_message"
+  printf "Message: %s\n" "$commit_message"
+  printf "Force: %s\n\n" "$force"
 } > "$log_file"
 
 committed=0

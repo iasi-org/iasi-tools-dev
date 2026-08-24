@@ -10,7 +10,7 @@ source "$TOOLS_DIR/lib/core/repositories.sh"
 
 usage() {
   cat <<'EOF'
-Usage: iasi-dev deploy [-f|--full] [-m|--message "message"] [project...]
+Usage: iasi-dev deploy [-f|--full] [--force] [-m|--message "message"] [project...]
 
 Commits the current project state and pushes it. With --full, repositories
 managed by IASI Quarto (`_iasi.yml`) run their own incremental deploy before
@@ -22,7 +22,8 @@ Arguments:
                by default
 
 Options:
-  -f, --full   Run each project deploy before committing and pushing
+  -f, --full   Run each project incremental deploy before committing and pushing
+  --force      Run each IASI Quarto build and publish unconditionally; takes precedence over --full
   -m, --message MESSAGE
                Base commit message; "deploy" by default
   -v           Show detailed operational and success messages
@@ -32,6 +33,7 @@ EOF
 }
 
 full=0
+force=0
 commit_message="deploy"
 silent=0
 target_arguments=()
@@ -44,6 +46,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     -f|--full)
       full=1
+      shift
+      ;;
+    --force)
+      force=1
       shift
       ;;
     -m|--message)
@@ -85,12 +91,21 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+# --force is an explicit execution mode. If both options are present, force wins.
+if [ "$force" -eq 1 ]; then
+  full=0
+fi
+
 export IASI_VERBOSITY
 
 if [ "${#target_arguments[@]}" -gt 1 ]; then
   for selected_target in "${target_arguments[@]}"; do
     deploy_options=(-m "$commit_message")
-    [ "$full" -eq 1 ] && deploy_options=(-f "${deploy_options[@]}")
+    if [ "$force" -eq 1 ]; then
+      deploy_options=(--force "${deploy_options[@]}")
+    elif [ "$full" -eq 1 ]; then
+      deploy_options=(-f "${deploy_options[@]}")
+    fi
     "$0" "${deploy_options[@]}" "$selected_target"
   done
   exit 0
@@ -134,6 +149,7 @@ mkdir -p -- "$LOG_DIR"
   printf "IASI deploy started at %s\n" "$(date --iso-8601=seconds)"
   printf "Directory: %s\n" "$TARGET_DIR"
   printf "Full: %s\n" "$full"
+  printf "Force: %s\n" "$force"
   printf "Message: %s\n\n" "$commit_message"
 } > "$LOG_FILE"
 
@@ -148,11 +164,14 @@ for repository in "${repositories[@]}"; do
     printf "============================================================\n"
   } >> "$LOG_FILE"
 
-  if [ "$full" -eq 1 ] && repository_has_iasi_project "$repository"; then
+  if { [ "$full" -eq 1 ] || [ "$force" -eq 1 ]; } && repository_has_iasi_project "$repository"; then
+
+    quarto_options=()
+    [ "$force" -eq 1 ] && quarto_options+=(--force)
 
     if IASI_QUARTO_OPERATION=deploy \
       IASI_LOG_FILE="$LOG_FILE" \
-      "$TOOLS_DIR/lib/commands/publish.sh" "$repository"; then
+      "$TOOLS_DIR/lib/commands/publish.sh" "${quarto_options[@]}" "$repository"; then
       :
     else
       deploy_rc=$?

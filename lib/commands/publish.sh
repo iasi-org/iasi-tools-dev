@@ -19,7 +19,7 @@ usage() {
   case "$operation" in
     build)
       cat <<'EOF'
-Usage: iasi-dev build [project...]
+Usage: iasi-dev build [--force] [project...]
 
 Recursively finds IASI projects identified by `_iasi.yml`, then runs
 iasi.quarto::build() once at each project repository root. Directories named
@@ -29,6 +29,7 @@ Arguments:
   project     IASI project or directory to search; current directory by default
 
 Options:
+  --force      Execute the complete operation unconditionally
   -v           Show detailed operational and success messages
   -s           Silent mode; show no messages
   -h, --help  Show this help
@@ -36,7 +37,7 @@ EOF
       ;;
     publish)
       cat <<'EOF'
-Usage: iasi-dev publish [project...]
+Usage: iasi-dev publish [--force] [project...]
 
 Recursively finds IASI projects identified by `_iasi.yml`, then runs
 iasi.quarto::publish() once at each project repository root.
@@ -47,6 +48,7 @@ Arguments:
   project     IASI project or directory to search; current directory by default
 
 Options:
+  --force      Execute the complete operation unconditionally
   -v           Show detailed operational and success messages
   -s           Silent mode; show no messages
   -h, --help  Show this help
@@ -54,7 +56,7 @@ EOF
       ;;
     deploy)
       cat <<'EOF'
-Internal usage: IASI_QUARTO_OPERATION=deploy publish.sh [project...]
+Internal usage: IASI_QUARTO_OPERATION=deploy publish.sh [--force] [project...]
 
 Runs iasi.quarto::deploy() once at each discovered IASI project.
 This operation is used internally by `iasi-dev deploy --full`.
@@ -63,6 +65,7 @@ EOF
   esac
 }
 silent=0
+force=0
 search_arguments=()
 
 while [ "$#" -gt 0 ]; do
@@ -70,6 +73,10 @@ while [ "$#" -gt 0 ]; do
     -h|--help)
       usage
       exit 0
+      ;;
+    --force)
+      force=1
+      shift
       ;;
     -v)
       if [ "$silent" -eq 0 ]; then
@@ -98,7 +105,9 @@ export IASI_VERBOSITY
 
 if [ "${#search_arguments[@]}" -gt 1 ]; then
   for selected_target in "${search_arguments[@]}"; do
-    "$0" "$selected_target"
+    child_options=()
+    [ "$force" -eq 1 ] && child_options+=(--force)
+    "$0" "${child_options[@]}" "$selected_target"
   done
   exit 0
 fi
@@ -181,13 +190,15 @@ if [ "$shared_log" -eq 1 ]; then
   {
     printf "IASI %s started at %s\n" "$operation" "$(date --iso-8601=seconds)"
     printf "Directory: %s\n" "$SEARCH_DIR"
-    printf "Operation: %s\n\n" "$operation"
+    printf "Operation: %s\n" "$operation"
+    printf "Force: %s\n\n" "$force"
   } >> "$LOG_FILE"
 else
   {
     printf "IASI %s started at %s\n" "$operation" "$(date --iso-8601=seconds)"
     printf "Directory: %s\n" "$SEARCH_DIR"
-    printf "Operation: %s\n\n" "$operation"
+    printf "Operation: %s\n" "$operation"
+    printf "Force: %s\n\n" "$force"
   } > "$LOG_FILE"
 fi
 
@@ -258,14 +269,14 @@ for repository_dir in "${repositories[@]}"; do
   case "$operation" in
     build)
       info "Construyendo $repository_name."
-      r_expression='iasi.quarto::build()'
+      if [ "$force" -eq 1 ]; then r_expression='iasi.quarto::build(force = TRUE)'; else r_expression='iasi.quarto::build()'; fi
       ;;
     publish)
       info "Publicando $repository_name."
-      r_expression='iasi.quarto::publish()'
+      if [ "$force" -eq 1 ]; then r_expression='iasi.quarto::publish(force = TRUE)'; else r_expression='iasi.quarto::publish()'; fi
       ;;
     deploy)
-      r_expression='iasi.quarto::deploy()'
+      if [ "$force" -eq 1 ]; then r_expression='iasi.quarto::deploy(force = TRUE)'; else r_expression='iasi.quarto::deploy()'; fi
       ;;
   esac
   printf "[%s]\n" "$repository_dir" >> "$LOG_FILE"
