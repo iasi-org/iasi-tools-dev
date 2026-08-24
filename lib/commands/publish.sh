@@ -314,7 +314,12 @@ for repository_dir in "${repositories[@]}"; do
 
 
   printf "\n" >> "$LOG_FILE"
-  success_detail "$repository_name: $operation completado."
+
+  if [ "$operation" != "deploy" ]; then
+    success_detail "$repository_name: $operation completado."
+  fi
 done
 
-success "${#repositories[@]} proyecto(s) IASI: $operation completado."
+if [ "$operation" != "deploy" ]; then
+  success "${#repositories[@]} proyecto(s) IASI: $operation completado."
+fi

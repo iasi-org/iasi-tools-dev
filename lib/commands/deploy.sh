@@ -174,9 +174,12 @@ for repository in "${repositories[@]}"; do
     exit 1
   fi
 
+  project_changed=0
+
   if git -C "$repository" diff --cached --quiet >> "$LOG_FILE" 2>&1; then
-    detail "$name no tiene cambios."
+    detail "No tiene cambios."
   else
+    project_changed=1
     if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then
       printf "PROJECT RESULT: FAILED (git commit)\n\n" >> "$LOG_FILE"
       error "No se pudo crear el commit de $name."
@@ -193,8 +196,9 @@ for repository in "${repositories[@]}"; do
     exit 1
   fi
 
-  success_detail "$name desplegado."
+  if [ "$project_changed" -eq 1 ]; then
+    success_detail "Desplegado."
+  fi
+
   printf "PROJECT RESULT: OK\n\n" >> "$LOG_FILE"
 done
-
-success "$commits commit(s) creados."
