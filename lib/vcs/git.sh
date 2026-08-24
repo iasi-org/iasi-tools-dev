@@ -28,11 +28,7 @@ vcs_stage_all() {
 vcs_has_changes() {
   local repository="$1"
 
-  if git -C "$repository" diff --cached --quiet; then
-    return 1
-  fi
-
-  return 0
+  [ -n "$(git -C "$repository" status --porcelain)" ]
 }
 
 vcs_commit() {

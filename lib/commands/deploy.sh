@@ -18,8 +18,8 @@ the normal commit and publish flow. Other repositories keep the normal VCS flow.
 Git is the default VCS.
 
 Arguments:
-  project      Optional project or workspace directory; the IASI workspace
-               containing iasi-tools-dev by default
+  project      Optional project or workspace directory; current directory
+               by default
 
 Options:
   -f, --full   Run each project deploy before committing and pushing
@@ -97,8 +97,7 @@ if [ "${#target_arguments[@]}" -gt 1 ]; then
 fi
 
 target_argument="${target_arguments[0]:-}"
-default_workspace="$(cd -- "$TOOLS_DIR/.." && pwd)"
-target="${target_argument:-$default_workspace}"
+target="${target_argument:-$PWD}"
 
 if [ ! -d "$target" ]; then
   error "No existe el directorio: $target"
@@ -106,12 +105,6 @@ if [ ! -d "$target" ]; then
 fi
 
 TARGET_DIR="$(cd -- "$target" && pwd)"
-
-if [ -n "$target_argument" ]; then
-  info "Desplegando $(basename -- "$TARGET_DIR")."
-else
-  info "Desplegando todos los proyectos."
-fi
 
 repositories=()
 
@@ -148,6 +141,7 @@ commits=0
 
 for repository in "${repositories[@]}"; do
   name="$(basename -- "$repository")"
+  info "Desplegando $name."
   {
     printf "============================================================\n"
     printf "PROJECT: %s\n" "$name"
@@ -180,6 +174,7 @@ for repository in "${repositories[@]}"; do
 
   if vcs_has_changes "$repository" >> "$LOG_FILE" 2>&1; then
     project_changed=1
+    info "Commit $name."
     if ! vcs_commit "$repository" "$commit_message" >> "$LOG_FILE" 2>&1; then
       printf "PROJECT RESULT: FAILED (vcs commit)\n\n" >> "$LOG_FILE"
       error "No se pudo crear el commit de $name."
@@ -191,6 +186,7 @@ for repository in "${repositories[@]}"; do
     info_detail "No tiene cambios."
   fi
 
+  info "Push $name."
   if ! vcs_push "$repository" >> "$LOG_FILE" 2>&1; then
     printf "PROJECT RESULT: FAILED (vcs publish)\n\n" >> "$LOG_FILE"
     error "No se pudieron subir los commits de $name."

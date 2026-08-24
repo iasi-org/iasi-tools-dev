@@ -101,7 +101,7 @@ if [ "${#repository_arguments[@]}" -gt 0 ]; then
   workspace_dir="$(dirname -- "$repository_path")"
  done
 else
-  workspace_dir="$(cd -- "$TOOLS_DIR/.." && pwd)"
+  workspace_dir="$PWD"
 
   for candidate in "$workspace_dir"/*; do
     is_project_root "$candidate" || continue
@@ -133,7 +133,6 @@ committed=0
 
 for repository in "${repositories[@]}"; do
   name="$(basename -- "$repository")"
-  info "Procesando $name."
 
   printf "[%s]\n" "$name" >> "$log_file"
 
@@ -144,6 +143,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if vcs_has_changes "$repository" >> "$log_file" 2>&1; then
+    info "Commit $name."
     if ! vcs_commit "$repository" "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
       warning "Consulta el log: $log_file"
@@ -155,6 +155,7 @@ for repository in "${repositories[@]}"; do
     info_detail "$name no tiene cambios."
   fi
 
+  info "Push $name."
   if ! vcs_push "$repository" >> "$log_file" 2>&1; then
     error "No se pudo publicar el commit de $name."
     warning "Consulta el log: $log_file"

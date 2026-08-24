@@ -265,7 +265,6 @@ for repository_dir in "${repositories[@]}"; do
       r_expression='iasi.quarto::publish()'
       ;;
     deploy)
-      info "Desplegando $repository_name."
       r_expression='iasi.quarto::deploy()'
       ;;
   esac
