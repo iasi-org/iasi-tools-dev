@@ -174,7 +174,7 @@ for repository in "${repositories[@]}"; do
 
   if vcs_has_changes "$repository" >> "$LOG_FILE" 2>&1; then
     project_changed=1
-    info "Commit $name."
+    info_detail "Commit $name."
     if ! vcs_commit "$repository" "$commit_message" >> "$LOG_FILE" 2>&1; then
       printf "PROJECT RESULT: FAILED (vcs commit)\n\n" >> "$LOG_FILE"
       error "No se pudo crear el commit de $name."
@@ -186,7 +186,7 @@ for repository in "${repositories[@]}"; do
     info_detail "No tiene cambios."
   fi
 
-  info "Push $name."
+  info_detail "Push $name."
   if ! vcs_push "$repository" >> "$LOG_FILE" 2>&1; then
     printf "PROJECT RESULT: FAILED (vcs publish)\n\n" >> "$LOG_FILE"
     error "No se pudieron subir los commits de $name."
