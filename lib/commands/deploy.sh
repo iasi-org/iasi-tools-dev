@@ -177,7 +177,7 @@ for repository in "${repositories[@]}"; do
   project_changed=0
 
   if git -C "$repository" diff --cached --quiet >> "$LOG_FILE" 2>&1; then
-    detail "No tiene cambios."
+    info_detail "No tiene cambios."
   else
     project_changed=1
     if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then

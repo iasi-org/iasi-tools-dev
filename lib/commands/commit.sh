@@ -144,7 +144,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if git -C "$repository" diff --cached --quiet >> "$log_file" 2>&1; then
-    detail "$name no tiene cambios."
+    info_detail "$name no tiene cambios."
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
