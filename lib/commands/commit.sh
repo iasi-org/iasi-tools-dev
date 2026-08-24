@@ -119,7 +119,6 @@ fi
 } > "$log_file"
 
 committed=0
-unchanged=0
 
 for repository in "${repositories[@]}"; do
   name="$(basename -- "$repository")"
@@ -134,9 +133,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if git -C "$repository" diff --cached --quiet >> "$log_file" 2>&1; then
-    detail "$name no tiene cambios; se comprueban commits pendientes."
-    printf "No changes.\n\n" >> "$log_file"
-    unchanged=$((unchanged + 1))
+    :
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
@@ -157,4 +154,4 @@ for repository in "${repositories[@]}"; do
   success_detail "$name publicado."
 done
 
-success "$committed proyecto(s) confirmado(s) y publicado(s); $unchanged sin cambios."
+success "$committed proyecto(s) confirmado(s) y publicado(s)."

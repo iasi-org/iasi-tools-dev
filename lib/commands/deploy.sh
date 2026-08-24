@@ -165,7 +165,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   if git -C "$repository" diff --cached --quiet >> "$LOG_FILE" 2>&1; then
-    detail "$name no tiene cambios."
+    :
   else
     if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then
       printf "PROJECT RESULT: FAILED (git commit)\n\n" >> "$LOG_FILE"
@@ -184,7 +184,6 @@ for repository in "${repositories[@]}"; do
   fi
 
   printf "PROJECT RESULT: OK\n\n" >> "$LOG_FILE"
-  success_detail "$name desplegado."
 done
 
 success "$commits commit(s) creados."
