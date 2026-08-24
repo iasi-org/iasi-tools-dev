@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 source "$TOOLS_DIR/lib/core/messages.sh"
+source "$TOOLS_DIR/lib/core/repositories.sh"
 
 usage() {
   cat <<'EOF'
@@ -94,7 +95,7 @@ for argument in "$@"; do
       fi
     done < <(
       find "$COMMON_DIR" \
-        -path '*/.git' -prune -o \
+        -path "*/$IASI_PROJECT_MARKER" -prune -o \
         \( -type f -o -type d \) -name "$entry_name" -print0
     )
 
@@ -120,12 +121,12 @@ for argument in "$@"; do
       if [ "$path_argument" = true ]; then
         find "$WORKSPACE_DIR" \
           -path "$COMMON_DIR" -prune -o \
-          -path '*/.git' -prune -o \
+          -path "*/$IASI_PROJECT_MARKER" -prune -o \
           -type f -path "*/${argument#./}" -print0
       else
         find "$WORKSPACE_DIR" \
           -path "$COMMON_DIR" -prune -o \
-          -path '*/.git' -prune -o \
+          -path "*/$IASI_PROJECT_MARKER" -prune -o \
           -type f -name "$entry_name" -print0
       fi
     )
@@ -151,12 +152,12 @@ for argument in "$@"; do
       if [ "$path_argument" = true ]; then
         find "$WORKSPACE_DIR" \
           -path "$COMMON_DIR" -prune -o \
-          -path '*/.git' -prune -o \
+          -path "*/$IASI_PROJECT_MARKER" -prune -o \
           -type d -path "*/${argument#./}" -print0 -prune
       else
         find "$WORKSPACE_DIR" \
           -path "$COMMON_DIR" -prune -o \
-          -path '*/.git' -prune -o \
+          -path "*/$IASI_PROJECT_MARKER" -prune -o \
           -type d -name "$entry_name" -print0 -prune
       fi
     )

@@ -14,11 +14,12 @@ Usage: iasi-dev deploy [-f|--full] [-m|--message "message"] [project...]
 
 Commits the current project state and pushes it. With --full, repositories
 managed by IASI Quarto (`_iasi.yml`) run their own incremental deploy before
-the normal commit and push. Other repositories keep the normal Git flow.
+the normal commit and publish flow. Other repositories keep the normal VCS flow.
+Git is the default VCS.
 
 Arguments:
-  project      Optional project or workspace directory; current directory
-               by default
+  project      Optional project or workspace directory; the IASI workspace
+               containing iasi-tools-dev by default
 
 Options:
   -f, --full   Run each project deploy before committing and pushing
@@ -96,7 +97,8 @@ if [ "${#target_arguments[@]}" -gt 1 ]; then
 fi
 
 target_argument="${target_arguments[0]:-}"
-target="${target_argument:-$PWD}"
+default_workspace="$(cd -- "$TOOLS_DIR/.." && pwd)"
+target="${target_argument:-$default_workspace}"
 
 if [ ! -d "$target" ]; then
   error "No existe el directorio: $target"
@@ -113,22 +115,22 @@ fi
 
 repositories=()
 
-if repository_root="$(git -C "$TARGET_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
-  repositories+=("$repository_root")
+if is_project_root "$TARGET_DIR"; then
+  repositories+=("$TARGET_DIR")
 else
   for candidate in "$TARGET_DIR"/*; do
-    [ -d "$candidate/.git" ] || continue
+    is_project_root "$candidate" || continue
     repositories+=("$candidate")
   done
 fi
 
 if [ "${#repositories[@]}" -eq 0 ]; then
-  error "No se encontraron repositorios Git en $TARGET_DIR."
+  error "No se encontraron proyectos en $TARGET_DIR (marcador: $IASI_PROJECT_MARKER)."
   exit 1
 fi
 
-if target_repository="$(git -C "$TARGET_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
-  LOG_DIR="$(dirname -- "$target_repository")/logs"
+if is_project_root "$TARGET_DIR"; then
+  LOG_DIR="$(dirname -- "$TARGET_DIR")/logs"
 else
   LOG_DIR="$TARGET_DIR/logs"
 fi
@@ -167,8 +169,8 @@ for repository in "${repositories[@]}"; do
     fi
   fi
 
-  if ! git -C "$repository" add -A -- . >> "$LOG_FILE" 2>&1; then
-    printf "PROJECT RESULT: FAILED (git add)\n\n" >> "$LOG_FILE"
+  if ! vcs_stage_all "$repository" >> "$LOG_FILE" 2>&1; then
+    printf "PROJECT RESULT: FAILED (vcs stage)\n\n" >> "$LOG_FILE"
     error "No se pudieron preparar los cambios de $name."
     warning "Consulta el log: $LOG_FILE"
     exit 1
@@ -176,21 +178,21 @@ for repository in "${repositories[@]}"; do
 
   project_changed=0
 
-  if git -C "$repository" diff --cached --quiet >> "$LOG_FILE" 2>&1; then
-    info_detail "No tiene cambios."
-  else
+  if vcs_has_changes "$repository" >> "$LOG_FILE" 2>&1; then
     project_changed=1
-    if ! git -C "$repository" commit -m "$commit_message" >> "$LOG_FILE" 2>&1; then
-      printf "PROJECT RESULT: FAILED (git commit)\n\n" >> "$LOG_FILE"
+    if ! vcs_commit "$repository" "$commit_message" >> "$LOG_FILE" 2>&1; then
+      printf "PROJECT RESULT: FAILED (vcs commit)\n\n" >> "$LOG_FILE"
       error "No se pudo crear el commit de $name."
       warning "Consulta el log: $LOG_FILE"
       exit 1
     fi
     commits=$((commits + 1))
+  else
+    info_detail "No tiene cambios."
   fi
 
-  if ! git -C "$repository" push >> "$LOG_FILE" 2>&1; then
-    printf "PROJECT RESULT: FAILED (git push)\n\n" >> "$LOG_FILE"
+  if ! vcs_push "$repository" >> "$LOG_FILE" 2>&1; then
+    printf "PROJECT RESULT: FAILED (vcs publish)\n\n" >> "$LOG_FILE"
     error "No se pudieron subir los commits de $name."
     warning "Consulta el log: $LOG_FILE"
     exit 1

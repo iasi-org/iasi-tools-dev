@@ -19,7 +19,7 @@ all repositories in that workspace are synchronized. With repository names,
 only those root-level repository directories are synchronized.
 
 The repository argument is a directory name inside the IASI workspace, not a
-path. Its .git directory is expected at the repository root.
+path. The project marker is defined by the configured VCS. Git is used by default.
 
 Missing repositories are cloned. Existing repositories are reset to the remote
 default branch and untracked files are removed. Command output is written to
@@ -153,17 +153,17 @@ while IFS='|' read -r name url default_branch; do
     detail "$url"
     detail "$target"
 
-    if ! git clone "$url" "$target" >> "$LOG_FILE" 2>&1; then
+    if ! vcs_clone "$url" "$target" >> "$LOG_FILE" 2>&1; then
       error "No se pudo clonar $name."
       detail "Consulta el log: $LOG_FILE"
       exit 1
     fi
-  elif [ ! -d "$target/.git" ]; then
+  elif ! is_project_root "$target"; then
     info "Sustituyendo $name por el repositorio remoto."
     detail "$target"
 
     if ! rm -rf -- "$target" >> "$LOG_FILE" 2>&1 || \
-       ! git clone "$url" "$target" >> "$LOG_FILE" 2>&1; then
+       ! vcs_clone "$url" "$target" >> "$LOG_FILE" 2>&1; then
       error "No se pudo recrear $name."
       detail "Consulta el log: $LOG_FILE"
       exit 1
@@ -172,22 +172,13 @@ while IFS='|' read -r name url default_branch; do
     info "Sincronizando $name con origin/$default_branch."
     detail "$target"
 
-    if ! {
-      if git -C "$target" remote get-url origin >> "$LOG_FILE" 2>&1; then
-        git -C "$target" remote set-url origin "$url" >> "$LOG_FILE" 2>&1
-      else
-        git -C "$target" remote add origin "$url" >> "$LOG_FILE" 2>&1
-      fi
-    }; then
+    if ! vcs_configure_remote "$target" "origin" "$url" >> "$LOG_FILE" 2>&1; then
       error "No se pudo configurar origin para $name."
       detail "Consulta el log: $LOG_FILE"
       exit 1
     fi
 
-    if ! git -C "$target" fetch --prune origin >> "$LOG_FILE" 2>&1 || \
-       ! git -C "$target" checkout -f -B "$default_branch" "origin/$default_branch" >> "$LOG_FILE" 2>&1 || \
-       ! git -C "$target" reset --hard "origin/$default_branch" >> "$LOG_FILE" 2>&1 || \
-       ! git -C "$target" clean -fd >> "$LOG_FILE" 2>&1; then
+    if ! vcs_sync_to_remote "$target" "origin" "$default_branch" >> "$LOG_FILE" 2>&1; then
       error "No se pudo sincronizar $name."
       detail "Consulta el log: $LOG_FILE"
       exit 1

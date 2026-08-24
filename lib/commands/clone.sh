@@ -37,7 +37,7 @@ clone_repository() {
   local clone_output=""
 
   while [ "$attempt" -le 3 ]; do
-    if clone_output="$(git clone "$url" "$target" 2>&1)"; then
+    if clone_output="$(vcs_clone "$url" "$target" 2>&1)"; then
       printf "Attempt %s for %s\n%s\n" "$attempt" "$name" "$clone_output" >> "$LOG_FILE"
       return 0
     fi

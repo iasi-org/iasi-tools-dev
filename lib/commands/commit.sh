@@ -12,12 +12,12 @@ usage() {
   cat <<'EOF'
 Usage: iasi-dev commit -m "message" [project...]
 
-Stages all changes, creates a commit, and pushes it to the configured remote.
-Without a repository, Git repositories directly below the current directory are
-selected.
+Stages all changes, creates a commit, and publishes it using the configured VCS.
+Without a repository, projects directly below the IASI workspace that contains
+iasi-tools-dev are selected. Git is the default VCS.
 
 Arguments:
-  project      Optional Git repository directory or path
+  project      Optional project directory or path
 
 Options:
   -m, --message MESSAGE
@@ -92,8 +92,8 @@ if [ "${#repository_arguments[@]}" -gt 0 ]; then
 
   repository_path="$(cd -- "$repository_argument" && pwd)"
 
-  if [ ! -d "$repository_path/.git" ]; then
-    error "El directorio no es un repositorio Git: $repository_argument"
+  if ! is_project_root "$repository_path"; then
+    error "El directorio no es un proyecto reconocido: $repository_argument"
     exit 2
   fi
 
@@ -101,15 +101,15 @@ if [ "${#repository_arguments[@]}" -gt 0 ]; then
   workspace_dir="$(dirname -- "$repository_path")"
  done
 else
-  workspace_dir="$PWD"
+  workspace_dir="$(cd -- "$TOOLS_DIR/.." && pwd)"
 
   for candidate in "$workspace_dir"/*; do
-    [ -d "$candidate/.git" ] || continue
+    is_project_root "$candidate" || continue
     repositories+=("$candidate")
   done
 
   if [ "${#repositories[@]}" -eq 0 ]; then
-    error "No se encontraron repositorios Git en $workspace_dir."
+    error "No se encontraron proyectos en $workspace_dir (marcador: $IASI_PROJECT_MARKER)."
     exit 1
   fi
 fi
@@ -137,25 +137,25 @@ for repository in "${repositories[@]}"; do
 
   printf "[%s]\n" "$name" >> "$log_file"
 
-  if ! git -C "$repository" add -A . >> "$log_file" 2>&1; then
+  if ! vcs_stage_all "$repository" >> "$log_file" 2>&1; then
     error "No se pudieron preparar los cambios de $name."
     warning "Consulta el log: $log_file"
     exit 1
   fi
 
-  if git -C "$repository" diff --cached --quiet >> "$log_file" 2>&1; then
-    info_detail "$name no tiene cambios."
-  else
-    if ! git -C "$repository" commit -m "$commit_message" >> "$log_file" 2>&1; then
+  if vcs_has_changes "$repository" >> "$log_file" 2>&1; then
+    if ! vcs_commit "$repository" "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
       warning "Consulta el log: $log_file"
       exit 1
     fi
 
     committed=$((committed + 1))
+  else
+    info_detail "$name no tiene cambios."
   fi
 
-  if ! git -C "$repository" push >> "$log_file" 2>&1; then
+  if ! vcs_push "$repository" >> "$log_file" 2>&1; then
     error "No se pudo publicar el commit de $name."
     warning "Consulta el log: $log_file"
     exit 1

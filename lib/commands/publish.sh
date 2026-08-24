@@ -112,7 +112,8 @@ fi
 
 SEARCH_DIR="$(cd -- "$search_argument" && pwd)"
 SEARCH_REPOSITORY=""
-if SEARCH_REPOSITORY="$(git -C "$SEARCH_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
+if is_project_root "$SEARCH_DIR"; then
+  SEARCH_REPOSITORY="$SEARCH_DIR"
   LOG_DIR="$(dirname -- "$SEARCH_REPOSITORY")/logs"
 else
   LOG_DIR="$SEARCH_DIR/logs"
@@ -207,7 +208,7 @@ else
     ancestor="$project_dir"
 
     while [ "$ancestor" != "/" ] && [ "$ancestor" != "." ]; do
-      if [ -e "$ancestor/.git" ]; then
+      if is_project_root "$ancestor"; then
         repository_dir="$ancestor"
         break
       fi
@@ -230,7 +231,7 @@ else
     fi
   done < <(
     find "$SEARCH_DIR" \
-      -path '*/.git' -prune -o \
+      -path "*/$IASI_PROJECT_MARKER" -prune -o \
       -path '*/.quarto' -prune -o \
       -path '*/publish' -prune -o \
       -path '*/.codex*' -prune -o \
@@ -279,7 +280,7 @@ for repository_dir in "${repositories[@]}"; do
     fi
   done < <(
     find "$repository_dir" \
-      -path '*/.git' -prune -o \
+      -path "*/$IASI_PROJECT_MARKER" -prune -o \
       -path '*/.quarto' -prune -o \
       -path '*/publish' -prune -o \
       -path '*/.codex*' -prune -o \
