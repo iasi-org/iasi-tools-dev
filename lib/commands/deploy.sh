@@ -11,15 +11,15 @@ usage() {
   cat <<'EOF'
 Usage: iasi-dev deploy [-f|--full] [-m|--message "message"] [repository...]
 
-Commits the current repository state and pushes it. With --full, build and
-publish are run successfully before the commit and push.
+Commits the current repository state and pushes it. With --full, each IASI
+Quarto repository runs its own incremental deploy before the commit and push.
 
 Arguments:
   repository   Optional repository or workspace directory; current directory
                by default
 
 Options:
-  -f, --full   Run build and publish before committing and pushing
+  -f, --full   Run each repository deploy before committing and pushing
   -m, --message MESSAGE
                Base commit message; "deploy" by default
   -v           Show detailed information, including success messages
@@ -98,11 +98,6 @@ else
   info "Desplegando todos los repositorios."
 fi
 
-if [ "$full" -eq 1 ]; then
-  "$TOOLS_DIR/lib/commands/build.sh" "$TARGET_DIR"
-  "$TOOLS_DIR/lib/commands/publish.sh" "$TARGET_DIR"
-fi
-
 repositories=()
 
 if repository_root="$(git -C "$TARGET_DIR" rev-parse --show-toplevel 2>/dev/null)"; then
@@ -134,11 +129,52 @@ mkdir -p -- "$LOG_DIR"
   printf "Message: %s\n\n" "$commit_message"
 } > "$LOG_FILE"
 
+repository_has_quarto() {
+  local repository="$1"
+  local match=""
+
+  match="$(
+    find "$repository" \
+      -path '*/.git' -prune -o \
+      -path '*/.quarto' -prune -o \
+      -path '*/publish' -prune -o \
+      -path '*/.codex*' -prune -o \
+      -path '*/tests' -prune -o \
+      -path '*/node_modules' -prune -o \
+      -path '*/renv' -prune -o \
+      -type f -name '_quarto.yml' -print -quit
+  )"
+
+  [ -n "$match" ]
+}
+
 commits=0
 
 for repository in "${repositories[@]}"; do
   name="$(basename -- "$repository")"
   printf "[%s]\n" "$name" >> "$LOG_FILE"
+
+  if [ "$full" -eq 1 ]; then
+    if repository_has_quarto "$repository"; then
+      printf "DEBUG iasi-dev deploy | repository = %s | quarto = TRUE\n" "$name" >> "$LOG_FILE"
+      info "Ejecutando deploy de $name."
+
+      if IASI_QUARTO_OPERATION=deploy \
+        IASI_LOG_FILE="$LOG_FILE" \
+        "$TOOLS_DIR/lib/commands/publish.sh" "$repository"; then
+        printf "DEBUG iasi-dev deploy | repository = %s | deploy_exit = 0\n" "$name" >> "$LOG_FILE"
+      else
+        deploy_rc=$?
+        printf "DEBUG iasi-dev deploy | repository = %s | deploy_exit = %s\n" "$name" "$deploy_rc" >> "$LOG_FILE"
+        error "Falló el deploy de $name."
+        warning "Consulta el log: $LOG_FILE"
+        exit "$deploy_rc"
+      fi
+    else
+      printf "DEBUG iasi-dev deploy | repository = %s | quarto = FALSE | deploy = SKIP\n" "$name" >> "$LOG_FILE"
+      detail "$name no contiene proyectos Quarto; deploy omitido."
+    fi
+  fi
 
   if ! git -C "$repository" add -A -- . >> "$LOG_FILE" 2>&1; then
     error "No se pudieron preparar los cambios de $name."

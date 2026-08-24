@@ -26,6 +26,10 @@ Available commands:
 Command output from underlying tools is written to timestamped files under the
 workspace `logs` directory; the console only shows IASI status messages.
 
+With `iasi-dev deploy --full`, repositories are processed one by one. IASI Quarto
+repositories delegate their incremental build/publish decision to
+`iasi.quarto::deploy()` before that repository is committed and pushed.
+
 The `build` and `publish` targets can be nested paths such as `dir1/dir2`.
 When supplied, only `dir2` and the IASI Quarto publications below it are
 processed; the operation does not expand to the enclosing Git repository.

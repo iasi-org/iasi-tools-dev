@@ -9,14 +9,15 @@ source "$TOOLS_DIR/lib/core/messages.sh"
 
 operation="${IASI_QUARTO_OPERATION:-publish}"
 
-if [ "$operation" != "build" ] && [ "$operation" != "publish" ]; then
+if [ "$operation" != "build" ] && [ "$operation" != "publish" ] && [ "$operation" != "deploy" ]; then
   error "Operación Quarto interna desconocida: $operation"
   exit 2
 fi
 
 usage() {
-  if [ "$operation" = "build" ]; then
-    cat <<'EOF'
+  case "$operation" in
+    build)
+      cat <<'EOF'
 Usage: iasi-dev build [repository...]
 
 Recursively finds repositories containing IASI Quarto projects, then runs
@@ -30,8 +31,9 @@ Options:
   -v           Show detailed information, including success messages
   -h, --help  Show this help
 EOF
-  else
-    cat <<'EOF'
+      ;;
+    publish)
+      cat <<'EOF'
 Usage: iasi-dev publish [repository...]
 
 Recursively finds repositories containing IASI Quarto projects, then runs
@@ -46,9 +48,17 @@ Options:
   -v           Show detailed information, including success messages
   -h, --help  Show this help
 EOF
-  fi
-}
+      ;;
+    deploy)
+      cat <<'EOF'
+Internal usage: IASI_QUARTO_OPERATION=deploy publish.sh [repository...]
 
+Runs iasi.quarto::deploy() once at each discovered IASI Quarto repository.
+This operation is used internally by `iasi-dev deploy --full`.
+EOF
+      ;;
+  esac
+}
 search_arguments=()
 
 while [ "$#" -gt 0 ]; do
@@ -94,7 +104,14 @@ if SEARCH_REPOSITORY="$(git -C "$SEARCH_DIR" rev-parse --show-toplevel 2>/dev/nu
 else
   LOG_DIR="$SEARCH_DIR/logs"
 fi
-LOG_FILE="$LOG_DIR/iasi-$operation-$(date +%Y%m%d%H%M%S).log"
+if [ -n "${IASI_LOG_FILE:-}" ]; then
+  LOG_FILE="$IASI_LOG_FILE"
+  LOG_DIR="$(dirname -- "$LOG_FILE")"
+  shared_log=1
+else
+  LOG_FILE="$LOG_DIR/iasi-$operation-$(date +%Y%m%d%H%M%S).log"
+  shared_log=0
+fi
 
 RSCRIPT_BIN="${IASI_RSCRIPT:-}"
 
@@ -146,11 +163,19 @@ if ! mkdir -p -- "$LOG_DIR"; then
   exit 1
 fi
 
-{
-  printf "IASI %s started at %s\n" "$operation" "$(date --iso-8601=seconds)"
-  printf "Directory: %s\n" "$SEARCH_DIR"
-  printf "Operation: %s\n\n" "$operation"
-} > "$LOG_FILE"
+if [ "$shared_log" -eq 1 ]; then
+  {
+    printf "IASI %s started at %s\n" "$operation" "$(date --iso-8601=seconds)"
+    printf "Directory: %s\n" "$SEARCH_DIR"
+    printf "Operation: %s\n\n" "$operation"
+  } >> "$LOG_FILE"
+else
+  {
+    printf "IASI %s started at %s\n" "$operation" "$(date --iso-8601=seconds)"
+    printf "Directory: %s\n" "$SEARCH_DIR"
+    printf "Operation: %s\n\n" "$operation"
+  } > "$LOG_FILE"
+fi
 
 repositories=()
 
@@ -204,6 +229,12 @@ else
 fi
 
 if [ "${#repositories[@]}" -eq 0 ]; then
+  if [ "$operation" = "deploy" ]; then
+    printf "DEBUG iasi-dev deploy | directory = %s | quarto_projects = 0 | deploy = SKIP\n" "$SEARCH_DIR" >> "$LOG_FILE"
+    detail "No hay proyectos Quarto en $(basename -- "$SEARCH_DIR"); deploy omitido."
+    exit 0
+  fi
+
   error "No se encontraron proyectos con _quarto.yml en $SEARCH_DIR."
   exit 1
 fi
@@ -211,19 +242,20 @@ fi
 for repository_dir in "${repositories[@]}"; do
   repository_name="$(basename -- "$repository_dir")"
 
-  if [ "$operation" = "build" ]; then
-    publish_dir="$repository_dir/publish"
-
-    if [ -d "$publish_dir" ]; then
-      rm -rf -- "$publish_dir"
-    fi
-
-    info "Construyendo $repository_name."
-    r_expression='iasi.quarto::build()'
-  else
-    info "Publicando $repository_name."
-    r_expression='iasi.quarto::publish()'
-  fi
+  case "$operation" in
+    build)
+      info "Construyendo $repository_name."
+      r_expression='iasi.quarto::build()'
+      ;;
+    publish)
+      info "Publicando $repository_name."
+      r_expression='iasi.quarto::publish()'
+      ;;
+    deploy)
+      info "Desplegando $repository_name."
+      r_expression='iasi.quarto::deploy()'
+      ;;
+  esac
   printf "[%s]\n" "$repository_dir" >> "$LOG_FILE"
 
   subprojects=()
@@ -255,15 +287,21 @@ for repository_dir in "${repositories[@]}"; do
     done
   fi
 
-  if ! (
+  if (
     cd -- "$repository_dir"
     PATH="$QUARTO_BIN_DIR:$PATH" \
       "$RSCRIPT_BIN" -e "$r_expression"
   ) >> "$LOG_FILE" 2>&1; then
+    rscript_rc=0
+  else
+    rscript_rc=$?
+    printf "DEBUG iasi-dev %s | repository = %s | rscript_exit = %s\n" "$operation" "$repository_name" "$rscript_rc" >> "$LOG_FILE"
     error "No se pudo ejecutar $operation: $repository_dir"
     warning "Consulta el log: $LOG_FILE"
-    exit 1
+    exit "$rscript_rc"
   fi
+
+  printf "DEBUG iasi-dev %s | repository = %s | rscript_exit = %s\n" "$operation" "$repository_name" "$rscript_rc" >> "$LOG_FILE"
 
   printf "\n" >> "$LOG_FILE"
   success_detail "$repository_name: $operation completado."
