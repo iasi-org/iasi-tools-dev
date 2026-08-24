@@ -279,11 +279,11 @@ for repository_dir in "${repositories[@]}"; do
 
   if [ "${#subprojects[@]}" -gt 0 ]; then
     info "Subproyectos IASI:"
-    printf "Subprojects:\n" >> "$LOG_FILE"
+    printf -- "- Subprojects:\n" >> "$LOG_FILE"
 
     for subproject in "${subprojects[@]}"; do
-      info "$subproject"
-      printf -- "- %s\n" "$subproject" >> "$LOG_FILE"
+      info $'\t'"$subproject"
+      printf -- "-\t%s\n" "$subproject" >> "$LOG_FILE"
     done
   fi
 
