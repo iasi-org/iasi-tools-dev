@@ -171,6 +171,7 @@ for repository in "${repositories[@]}"; do
   fi
 
   project_changed=0
+  project_pushed=0
 
   if vcs_has_changes "$repository" >> "$LOG_FILE" 2>&1; then
     project_changed=1
@@ -182,19 +183,22 @@ for repository in "${repositories[@]}"; do
       exit 1
     fi
     commits=$((commits + 1))
-  else
+  fi
+
+  if vcs_has_outgoing "$repository" >> "$LOG_FILE" 2>&1; then
+    info_detail "Push $name."
+    if ! vcs_push "$repository" >> "$LOG_FILE" 2>&1; then
+      printf "PROJECT RESULT: FAILED (vcs publish)\n\n" >> "$LOG_FILE"
+      error "No se pudieron subir los commits de $name."
+      warning "Consulta el log: $LOG_FILE"
+      exit 1
+    fi
+    project_pushed=1
+  fi
+
+  if [ "$project_changed" -eq 0 ] && [ "$project_pushed" -eq 0 ]; then
     info_detail "No tiene cambios."
-  fi
-
-  info_detail "Push $name."
-  if ! vcs_push "$repository" >> "$LOG_FILE" 2>&1; then
-    printf "PROJECT RESULT: FAILED (vcs publish)\n\n" >> "$LOG_FILE"
-    error "No se pudieron subir los commits de $name."
-    warning "Consulta el log: $LOG_FILE"
-    exit 1
-  fi
-
-  if [ "$project_changed" -eq 1 ]; then
+  else
     success_detail "Desplegado."
   fi
 

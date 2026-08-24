@@ -31,6 +31,15 @@ vcs_has_changes() {
   [ -n "$(git -C "$repository" status --porcelain)" ]
 }
 
+vcs_has_outgoing() {
+  local repository="$1"
+  local upstream
+
+  upstream="$(git -C "$repository" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)" || return 1
+
+  [ "$(git -C "$repository" rev-list --count "$upstream..HEAD")" -gt 0 ]
+}
+
 vcs_commit() {
   local repository="$1"
   local message="$2"

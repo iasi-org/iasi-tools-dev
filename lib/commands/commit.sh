@@ -142,7 +142,11 @@ for repository in "${repositories[@]}"; do
     exit 1
   fi
 
+  project_changed=0
+  project_pushed=0
+
   if vcs_has_changes "$repository" >> "$log_file" 2>&1; then
+    project_changed=1
     info_detail "Commit $name."
     if ! vcs_commit "$repository" "$commit_message" >> "$log_file" 2>&1; then
       error "No se pudo crear el commit de $name."
@@ -151,19 +155,25 @@ for repository in "${repositories[@]}"; do
     fi
 
     committed=$((committed + 1))
-  else
-    info_detail "$name no tiene cambios."
   fi
 
-  info_detail "Push $name."
-  if ! vcs_push "$repository" >> "$log_file" 2>&1; then
-    error "No se pudo publicar el commit de $name."
-    warning "Consulta el log: $log_file"
-    exit 1
+  if vcs_has_outgoing "$repository" >> "$log_file" 2>&1; then
+    info_detail "Push $name."
+    if ! vcs_push "$repository" >> "$log_file" 2>&1; then
+      error "No se pudo publicar el commit de $name."
+      warning "Consulta el log: $log_file"
+      exit 1
+    fi
+    project_pushed=1
+  fi
+
+  if [ "$project_changed" -eq 0 ] && [ "$project_pushed" -eq 0 ]; then
+    info_detail "$name no tiene cambios."
+  else
+    success_detail "$name desplegado."
   fi
 
   printf "\n" >> "$log_file"
-  success_detail "$name desplegado."
 done
 
 success "$committed proyecto(s) confirmado(s) y publicado(s)."

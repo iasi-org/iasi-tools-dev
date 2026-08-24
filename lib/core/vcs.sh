@@ -24,6 +24,7 @@ _required_vcs_functions=(
   vcs_is_project_root
   vcs_stage_all
   vcs_has_changes
+  vcs_has_outgoing
   vcs_commit
   vcs_push
   vcs_clone
