@@ -1,0 +1,127 @@
+---
+title: "IASI Dev: Sync"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Propósito
+
+`sync` es una utilidad de desarrollo de IASI.
+
+No forma parte del pipeline de fases sobre repositorios.
+
+Su propósito es propagar ficheros o directorios compartidos canónicos desde `iasi-common` hacia copias que ya existan en otros lugares del workspace.
+
+Flujo típico:
+
+```text
+modificar iasi.scss en un repositorio
+→ validar el cambio
+→ pasar la versión canónica aceptada a iasi-common
+→ iasi-dev sync iasi.scss
+→ sincronizar las copias existentes
+```
+
+# Dirección canónica
+
+La sincronización es unidireccional:
+
+```text
+iasi-common → copias existentes
+```
+
+`sync` no debe intentar una fusión bidireccional ni decidir qué copia es la canónica.
+
+El humano decide qué versión pasa a ser canónica colocándola en `iasi-common`.
+
+Después de esa decisión, `sync` realiza la propagación mecánica.
+
+# Invocación
+
+```text
+iasi-dev sync <entry> [entry...]
+```
+
+Los argumentos posicionales son entradas que deben sincronizarse, no repositorios.
+
+Debe indicarse al menos una entrada.
+
+# Nombre simple
+
+Ejemplo:
+
+```text
+iasi-dev sync iasi.scss
+```
+
+Un nombre simple se busca recursivamente dentro de `iasi-common`.
+
+Debe resolverse de forma única.
+
+- cero coincidencias: error;
+- más de una coincidencia: error por ambigüedad;
+- exactamente una coincidencia: esa entrada se convierte en la fuente canónica.
+
+# Ruta relativa
+
+Ejemplo:
+
+```text
+iasi-dev sync styles/iasi.scss
+```
+
+Una ruta identifica una entrada relativa a `iasi-common`.
+
+Las rutas absolutas no son especificaciones válidas de fuente para sync.
+
+La fuente resuelta debe permanecer dentro de `iasi-common`.
+
+# Solo copias existentes
+
+Sync actualiza únicamente destinos que ya existen.
+
+No debe crear una nueva copia distribuida simplemente porque exista una fuente canónica.
+
+Esta es una regla definitoria.
+
+# Ficheros
+
+Para una fuente que sea fichero, cada copia existente correspondiente se reemplaza por el contenido canónico.
+
+# Directorios
+
+Para una fuente que sea directorio, la sincronización es un merge:
+
+- los ficheros/directorios presentes en la fuente se crean o actualizan en el destino existente;
+- las entradas que existan solo en el destino se conservan;
+- el destino no se vacía antes de sincronizar.
+
+# Exclusiones
+
+Sync no debe recorrer nunca:
+
+```text
+iasi-common
+.git
+tests
+```
+
+# Modo tolerant
+
+Con `-t`, un error al sincronizar una entrada o destino genera un aviso y se continúa.
+
+Sin `-t`, sync termina con `RC.Sync`.
+
+La ausencia de copias fuera de `iasi-common` puede notificarse como aviso, pero no constituye por sí misma un fallo de sincronización.
+
+# Logging y verbosidad
+
+Sync utiliza el mismo log de ejecución y el mismo sistema de visibilidad de consola que el frontend principal.
+
+El nivel normal anuncia la entrada canónica.
+
+El nivel detallado puede mostrar cada copia destino.
+
+El nivel muy detallado puede informar de la finalización de cada destino sincronizado.

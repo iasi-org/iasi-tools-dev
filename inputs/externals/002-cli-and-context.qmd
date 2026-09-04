@@ -1,0 +1,167 @@
+---
+title: "IASI Dev: CLI y contexto de ejecución"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Invocación
+
+La forma general del comando es:
+
+```text
+iasi-dev <command> [flags] [--key value] [argumentos posicionales...]
+```
+
+Los comandos orientados a repositorios incluyen actualmente:
+
+```text
+build
+publish
+commit
+release
+deploy
+```
+
+Las utilidades incluyen:
+
+```text
+sync
+help
+```
+
+# Argumentos comunes
+
+El contexto de ejecución debe parsearse una sola vez y propagarse hacia abajo.
+
+Conceptualmente contiene al menos:
+
+```go
+type Arguments struct {
+    Verbose  int
+    Full     bool
+    Tolerant bool
+    Install  bool
+    Message  string
+    Format   string
+    LogFile  string
+    Params   map[string]string
+}
+```
+
+Las funciones hijas no deben volver a interpretar la línea de comandos.
+
+# Flags
+
+## `-f`
+
+`-f` significa **full**.
+
+Solicita la preparación lógica completa necesaria para la fase seleccionada.
+
+En APIs específicas de una tecnología, `Full` puede mapearse a un parámetro denominado `force`, por ejemplo:
+
+```r
+iasi.quarto::build(force = TRUE)
+iasi.quarto::publish(force = TRUE)
+```
+
+El concepto del frontend sigue siendo `Full`.
+
+## `-t`
+
+Activa ejecución tolerante.
+
+Un repositorio que falla se elimina de la salida de la fase y el procesamiento continúa con los repositorios restantes.
+
+Sin `-t`, la fase propietaria del error se detiene inmediatamente.
+
+## `-i`
+
+Solicita instalar artefactos de tipo R package después de haberlos construido.
+
+Solo tiene significado para tipos de artefacto que soportan instalación.
+
+El build debe generar el paquete fuente y el binario independientemente de la instalación.
+
+## `--format value`
+
+Especifica el formato solicitado para el build Quarto.
+
+Se aceptan valores con o sin comillas según el parsing normal de la shell.
+
+Ejemplos:
+
+```text
+--format html
+--format "html"
+```
+
+## `--message value`
+
+Especifica el mensaje del commit Git.
+
+Valor por defecto:
+
+```text
+iasi-dev <command>
+```
+
+Ejemplo:
+
+```text
+iasi-dev commit --message "release docs"
+```
+
+## Parámetros genéricos
+
+Los pares `--key value` no reconocidos pueden conservarse en `Arguments.Params` para consumidores posteriores.
+
+No debe añadirse validación especulativa antes de que exista un requisito real.
+
+# Argumentos posicionales de repositorio
+
+Para comandos orientados a repositorios:
+
+```text
+iasi-dev build
+```
+
+equivale a seleccionar los directorios hijos directos del directorio de trabajo actual.
+
+La búsqueda es **solo de primer nivel**.
+
+Los directorios explícitos significan exactamente esos directorios:
+
+```text
+iasi-dev build repo1 repo2
+```
+
+Las rutas relativas se resuelven desde el directorio de trabajo actual.
+
+Se aceptan rutas absolutas.
+
+Internamente, las rutas seleccionadas deben mantenerse normalizadas y absolutas.
+
+# Semántica de `.`
+
+Un `.` explícito significa:
+
+> seleccionar los directorios hijos directos del directorio de trabajo actual.
+
+No significa procesar el propio directorio actual.
+
+# `tests`
+
+Los directorios denominados `tests` están excluidos globalmente de las búsquedas de directorios y del recorrido de artefactos.
+
+No deben seleccionarse, atravesarse ni producir artefactos.
+
+# Argumentos posicionales de `sync`
+
+`sync` es diferente.
+
+Sus argumentos posicionales son entradas que deben sincronizarse desde `iasi-common`, no repositorios.
+
+Por tanto, `sync` no debe pasar sus argumentos posicionales por la selección de repositorios.

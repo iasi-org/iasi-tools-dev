@@ -1,0 +1,182 @@
+---
+title: "IASI Dev: Commit, release y deploy"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Commit
+
+## Contrato
+
+```go
+func runCommit(arguments Arguments, repositories []string) []string
+```
+
+Commit sigue el mismo contrato de supervivencia de repositorios que build y publish.
+
+Trabaja únicamente a nivel Git del repositorio.
+
+No descubre artefactos.
+
+## Comportamiento normal
+
+Para cada repositorio Git superviviente:
+
+```text
+git add
+→ commit si existen cambios
+→ push si existen commits pendientes
+```
+
+Que no existan cambios locales no es un error.
+
+Que no existan commits pendientes de push no es un error.
+
+El repositorio permanece en la lista de salida cuando simplemente no hay nada que commitear o enviar.
+
+## Mensaje de commit
+
+El mensaje por defecto es:
+
+```text
+iasi-dev <command>
+```
+
+El usuario puede sobrescribirlo mediante:
+
+```text
+--message "..."
+```
+
+## Comportamiento full
+
+Con `-f`, commit delega primero en publish:
+
+```text
+commit -f
+→ publish -f
+    → build
+    → publish
+→ commit
+→ push
+```
+
+Commit debe usar la lista devuelta por publish.
+
+# Release
+
+## Contrato
+
+```go
+func runRelease(arguments Arguments, repositories []string) []string
+```
+
+Release sigue el mismo contrato de supervivencia de repositorios.
+
+## Responsabilidad central
+
+Release promociona material generado y aceptado:
+
+```text
+outputs/ → releases/
+```
+
+La promoción es una **copia/promoción**, no un movimiento destructivo.
+
+`outputs/` conserva el material de trabajo generado.
+
+`releases/` contiene el material aceptado explícitamente para entrega.
+
+## Significado metodológico
+
+`release` es una frontera explícita de aceptación humana.
+
+Ejecutar:
+
+```text
+iasi-dev release
+```
+
+significa:
+
+> el resultado generado actual se acepta como release.
+
+Build, publish y Git commit no implican esta aceptación.
+
+Por tanto, el ingeniero puede realizar múltiples builds, publishes o commits sin modificar `releases/`.
+
+## Comportamiento full
+
+Con `-f`:
+
+```text
+release -f
+→ publish -f
+    → build
+    → publish
+→ outputs → releases
+```
+
+Release nunca llama a commit.
+
+# Deploy
+
+## Papel
+
+Deploy es un comando de orquestación.
+
+El mecanismo efectivo de despliegue es el `git push` realizado por commit.
+
+Deploy no necesita un paso técnico adicional de despliegue cuando el push es el trigger configurado de entrega.
+
+## Sin full
+
+Una release previamente aceptada puede desplegarse ejecutando:
+
+```text
+iasi-dev deploy
+```
+
+Esto realiza commit/push sobre los repositorios seleccionados sin reconstruir, republicar ni crear una nueva release.
+
+Permite el flujo explícito:
+
+```text
+iasi-dev release iasi-quarto
+iasi-dev deploy
+```
+
+## Con full
+
+`deploy -f` realiza la cadena completa de preparación:
+
+```text
+deploy -f
+→ release -f
+    → publish -f
+        → build
+        → publish
+    → release
+→ commit
+→ push
+```
+
+Después de completar la cadena full de release, deploy no debe permitir que el comportamiento `-f` propio de commit vuelva a disparar publish.
+
+La orquestación debe evitar trabajo duplicado.
+
+# Separación central
+
+Los comandos tienen significados distintos:
+
+```text
+build    = construir
+publish  = generar material publicable
+release  = aceptar/promocionar explícitamente material generado
+commit   = persistir y hacer push del estado Git
+deploy   = orquestar la entrega mediante commit/push
+```
+
+La posibilidad de ejecutar estos pasos de forma independiente es una propiedad requerida por la metodología.

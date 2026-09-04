@@ -1,0 +1,80 @@
+---
+title: "IASI Dev: Publish"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Contrato
+
+```go
+func runPublish(arguments Arguments, repositories []string) []string
+```
+
+Publish utiliza el mismo contrato de fase sobre repositorios que build.
+
+# Comportamiento full
+
+Cuando `Full` está activo, publish debe ejecutar primero:
+
+```go
+repositories = runBuild(arguments, repositories)
+```
+
+Publish debe continuar únicamente con los repositorios devueltos por build.
+
+No debe reconstruir la lista original.
+
+# Tipos publicables
+
+Publish procesa actualmente solo artefactos declarados como:
+
+```yaml
+type: quarto
+```
+
+o:
+
+```yaml
+type: book
+```
+
+Los demás tipos de artefacto se ignoran durante publish.
+
+Ignorar un tipo no debe eliminar su repositorio de la lista devuelta.
+
+Un repositorio que no contenga ningún artefacto publicable sigue siendo un superviviente válido de la fase.
+
+# Publicación Quarto
+
+Los artefactos publicables de la familia Quarto deben procesarse mediante:
+
+```r
+iasi.quarto::publish(...)
+```
+
+El comando se ejecuta desde el directorio del artefacto y toda la salida externa se escribe en el log común de ejecución.
+
+Cuando `Full` está activo, publish debe pasar:
+
+```r
+force = TRUE
+```
+
+# Fallos
+
+Si falla la publicación de cualquier artefacto relevante:
+
+- con `-t`: avisar, eliminar el repositorio de la salida y continuar;
+- sin `-t`: terminar inmediatamente con `RC.Publish`.
+
+Los artefactos ignorados porque su tipo no es publicable no son fallos.
+
+# Significado de publish
+
+Publish genera o prepara material destinado a publicación.
+
+Publish **no** constituye la aceptación de una release.
+
+El material generado sigue siendo output de trabajo hasta que el ingeniero ejecuta explícitamente `release`.
