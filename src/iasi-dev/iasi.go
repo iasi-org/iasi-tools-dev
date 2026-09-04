@@ -11,7 +11,8 @@ import (
 
 // IASI contains the processed configuration of an IASI marker.
 type IASI struct {
-	Type string `yaml:"type"`
+	Type       string `yaml:"type"`
+	ReleaseDir string `yaml:"release-dir"`
 }
 
 // readIASI reads and processes the IASI marker of a directory.

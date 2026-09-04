@@ -363,9 +363,13 @@ func buildArtifact(artifact string, arguments Arguments) error {
 
 	var err error
 	switch iasi.Type {
-	case "r-package": err = buildPackage(artifact, arguments, iasi)
-	case "quarto": err = buildQuarto(artifact, arguments, iasi)
-	default: cli.Warning("Se ignora %s: type ausente o no soportado: %q.", artifact, iasi.Type); return nil
+	case "r-package":
+		err = buildPackage(artifact, arguments, iasi)
+	case "quarto":
+		err = buildQuarto(artifact, arguments, iasi)
+	default:
+		cli.Warning("Se ignora %s: type ausente o no soportado: %q.", artifact, iasi.Type)
+		return nil
 	}
 
 	if err != nil {
@@ -518,9 +522,12 @@ func publishArtifact(artifact string, arguments Arguments) error {
 	}
 
 	switch iasi.Type {
-	case "quarto": return publishQuarto(artifact, arguments, iasi)
-	case "book": return publishQuarto(artifact, arguments, iasi)
-	default: return nil
+	case "quarto":
+		return publishQuarto(artifact, arguments, iasi)
+	case "book":
+		return publishQuarto(artifact, arguments, iasi)
+	default:
+		return nil
 	}
 }
 
@@ -663,12 +670,9 @@ func appendLog(logFile string, data []byte) error {
 	return err
 }
 
-// runRelease promotes the selected repositories to releases and returns those completed successfully.
+// runRelease promotes the selected repositories and returns those completed successfully.
+// With -f, each repository is committed and pushed only after its release succeeds.
 func runRelease(arguments Arguments, repositories []string) []string {
-	if arguments.Full {
-		repositories = runPublish(arguments, repositories)
-	}
-
 	released := []string{}
 
 	for _, repository := range repositories {
@@ -678,6 +682,9 @@ func runRelease(arguments Arguments, repositories []string) []string {
 
 		cli.Info("Generando release de %s", filepath.Base(repository))
 		err := releaseRepository(repository, arguments)
+		if err == nil && arguments.Full {
+			err = commitRepository(repository, arguments)
+		}
 		if err == nil {
 			released = append(released, repository)
 			continue
@@ -696,17 +703,15 @@ func runRelease(arguments Arguments, repositories []string) []string {
 	return released
 }
 
-// releaseRepository promotes one repository from outputs to releases.
-// The copy is intentionally pending; for now the operation only records progress.
-func releaseRepository(repository string, arguments Arguments) error {
-	cli.VeryVerbose("\t%s: release completada.", filepath.Base(repository))
-	return nil
-}
-
-// runDeploy releases when full and then commits and pushes the surviving repositories.
+// runDeploy executes the complete build/publish/release/commit cycle when full.
 func runDeploy(arguments Arguments, repositories []string) []string {
 	if arguments.Full {
-		repositories = runRelease(arguments, repositories)
+		repositories = runPublish(arguments, repositories)
+
+		releaseArguments := arguments
+		releaseArguments.Full = false
+		repositories = runRelease(releaseArguments, repositories)
+
 		arguments.Full = false
 	}
 
