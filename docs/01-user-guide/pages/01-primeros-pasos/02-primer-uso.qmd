@@ -1,0 +1,30 @@
+---
+title: "Primer uso"
+---
+
+Para comprobar los comandos disponibles:
+
+```powershell
+iasi-dev help
+```
+
+Para construir todos los repositorios IASI situados directamente bajo el directorio actual:
+
+```powershell
+iasi-dev build
+```
+
+Para construir uno:
+
+```powershell
+iasi-dev build iasi-quarto
+```
+
+Por defecto, la salida muestra el progreso principal:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+```
+
+Puede aumentar el detalle con `-v` o `-V`.
+

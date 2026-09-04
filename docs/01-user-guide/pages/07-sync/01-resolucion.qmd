@@ -1,0 +1,22 @@
+---
+title: "Resolver nombres y rutas"
+---
+
+Con un nombre simple:
+
+```powershell
+iasi-dev sync iasi.scss
+```
+
+`iasi-dev` busca ese nombre dentro de `iasi-common`.
+
+Debe encontrar una única fuente.
+
+Si existen varias entradas con el mismo nombre, la petición es ambigua y debe especificarse una ruta:
+
+```powershell
+iasi-dev sync resources/css/iasi.scss
+```
+
+La ruta se interpreta como relativa a `iasi-common`.
+

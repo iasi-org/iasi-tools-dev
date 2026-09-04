@@ -1,0 +1,34 @@
+---
+title: "Repositorios y artefactos"
+---
+
+`iasi-dev` trabaja primero con repositorios y, dentro de ellos, con artefactos.
+
+Un repositorio IASI se reconoce por un marcador en su raíz:
+
+```text
+_iasi.yml
+```
+
+o:
+
+```text
+.iasi.yml
+```
+
+y, para las operaciones actuales de desarrollo, por su repositorio Git.
+
+Dentro del repositorio pueden existir varios artefactos. Cada artefacto se declara mediante su propio marcador IASI y un tipo explícito.
+
+Ejemplos:
+
+```yaml
+type: quarto
+```
+
+```yaml
+type: r-package
+```
+
+El tipo expresa la intención. `iasi-dev` no necesita adivinarla buscando `_quarto.yml`, `DESCRIPTION` u otros archivos tecnológicos.
+

@@ -1,0 +1,24 @@
+---
+title: "Deploy full"
+---
+
+Para ejecutar la cadena completa:
+
+```powershell
+iasi-dev deploy -f
+```
+
+el flujo es:
+
+```text
+build
+→ publish
+→ release
+→ commit
+→ push
+```
+
+Cada fase recibe únicamente los repositorios que han sobrevivido a la anterior.
+
+Si se utiliza `-t`, un repositorio que falle se retira del flujo y los demás pueden continuar.
+

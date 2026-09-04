@@ -1,0 +1,29 @@
+---
+title: "Construir paquetes R"
+---
+
+Para:
+
+```yaml
+type: r-package
+```
+
+build genera las dos distribuciones previstas:
+
+```text
+paquete fuente
+paquete binario
+```
+
+Construir un paquete no significa instalarlo.
+
+Si además quiere instalarlo después de construirlo:
+
+```powershell
+iasi-dev build -i iasi-quarto
+```
+
+`-i` añade la instalación al final del build del paquete R.
+
+La generación del binario puede requerir internamente una instalación temporal de R, pero esa instalación temporal no equivale a instalar el paquete en la librería habitual del usuario.
+

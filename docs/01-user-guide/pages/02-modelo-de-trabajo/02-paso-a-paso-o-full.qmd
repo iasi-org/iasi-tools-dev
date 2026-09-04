@@ -1,0 +1,48 @@
+---
+title: "Paso a paso o full"
+---
+
+Puede controlar cada fase:
+
+```powershell
+iasi-dev build iasi-quarto
+iasi-dev publish iasi-quarto
+iasi-dev release iasi-quarto
+iasi-dev deploy
+```
+
+O pedir a una fase que prepare también lo necesario antes de ejecutarse.
+
+```powershell
+iasi-dev publish -f iasi-quarto
+```
+
+```text
+build
+→ publish
+```
+
+```powershell
+iasi-dev release -f iasi-quarto
+```
+
+```text
+build
+→ publish
+→ release
+```
+
+```powershell
+iasi-dev deploy -f
+```
+
+```text
+build
+→ publish
+→ release
+→ commit
+→ push
+```
+
+`-f` significa **full**: completar la cadena necesaria hasta la operación solicitada.
+

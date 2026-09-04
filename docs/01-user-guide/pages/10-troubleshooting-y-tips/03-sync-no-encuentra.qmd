@@ -1,0 +1,20 @@
+---
+title: "Sync no encuentra la fuente"
+---
+
+Si:
+
+```powershell
+iasi-dev sync iasi.scss
+```
+
+no encuentra una fuente única, compruebe `iasi-common`.
+
+Si existen varias copias con ese mismo nombre, indique la ruta relativa:
+
+```powershell
+iasi-dev sync resources/css/iasi.scss
+```
+
+Si la fuente existe pero no cambia ningún repositorio, recuerde que `sync` solo actualiza copias que ya existen.
+

@@ -1,0 +1,4 @@
+publication:
+  strategy: regular
+  content-dir: pages
+  numbered: true

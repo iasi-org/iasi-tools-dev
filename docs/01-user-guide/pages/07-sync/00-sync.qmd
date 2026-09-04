@@ -1,0 +1,29 @@
+---
+title: "Sincronizar contenido común"
+---
+
+`sync` es una utilidad de desarrollo para contenido compartido.
+
+La fuente canónica es:
+
+```text
+iasi-common
+```
+
+Un uso habitual es:
+
+```text
+modificar iasi.scss en un repositorio
+→ comprobar el cambio
+→ pasar la versión aceptada a iasi-common
+→ sincronizar las copias
+```
+
+Después:
+
+```powershell
+iasi-dev sync iasi.scss
+```
+
+propaga la versión de `iasi-common` hacia las copias ya existentes.
+

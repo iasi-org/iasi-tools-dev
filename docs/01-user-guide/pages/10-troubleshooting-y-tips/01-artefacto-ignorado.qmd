@@ -1,0 +1,22 @@
+---
+title: "Un artefacto se ignora"
+---
+
+Compruebe su marcador IASI.
+
+Debe declarar explícitamente un tipo reconocido, por ejemplo:
+
+```yaml
+type: quarto
+```
+
+o:
+
+```yaml
+type: r-package
+```
+
+Un `type` ausente, vacío o no soportado produce un aviso y el artefacto se ignora.
+
+No intente corregirlo añadiendo archivos tecnológicos para que IASI lo deduzca. Declare la intención.
+

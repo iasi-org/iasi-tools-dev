@@ -1,0 +1,22 @@
+---
+title: "Un repositorio no aparece"
+---
+
+Compruebe primero que el directorio seleccionado contiene un marcador IASI en su raíz:
+
+```text
+_iasi.yml
+```
+
+o:
+
+```text
+.iasi.yml
+```
+
+Las operaciones actuales sobre repositorios también esperan `.git`.
+
+Los directorios que no cumplen estas condiciones pueden ignorarse deliberadamente.
+
+Compruebe además que el repositorio no está dentro de un directorio llamado `tests`.
+

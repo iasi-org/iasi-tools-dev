@@ -1,0 +1,45 @@
+---
+title: "Niveles de verbosidad"
+---
+
+La salida de consola tiene cuatro niveles acumulativos:
+
+```text
+0 = 000  silencioso
+1 = 001  normal
+3 = 011  detallado
+7 = 111  muy detallado
+```
+
+Uso:
+
+```text
+-s      silencioso
+sin flag normal
+-v      detallado
+-V      muy detallado
+```
+
+Ejemplo normal:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+```
+
+Con `-v`:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+13:54:11 -     Construyendo 01-user-guide
+```
+
+Con `-V`:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+13:54:11 -     Construyendo 01-user-guide
+13:54:16 -     01-user-guide: build completado.
+```
+
+Si se utiliza `-s`, la consola queda silenciosa aunque también se haya indicado otro nivel.
+

@@ -1,0 +1,24 @@
+---
+title: "Solo copias existentes"
+---
+
+`sync` no distribuye un fichero a todos los repositorios por el mero hecho de existir en `iasi-common`.
+
+Solo actualiza destinos que **ya existen**.
+
+Para ficheros, reemplaza la copia existente.
+
+Para directorios, realiza un merge:
+
+```text
+contenido de common
+→ crea o actualiza dentro del destino
+
+contenido exclusivo del destino
+→ se conserva
+```
+
+No vacía el directorio destino.
+
+`iasi-common`, `.git` y `tests` se excluyen de los recorridos.
+

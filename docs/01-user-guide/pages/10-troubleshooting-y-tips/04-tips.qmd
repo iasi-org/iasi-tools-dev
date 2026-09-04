@@ -1,0 +1,42 @@
+---
+title: "Tips & Tricks"
+---
+
+## Trabaje con la menor fase necesaria
+
+Si solo necesita comprobar una construcción:
+
+```powershell
+iasi-dev build repo
+```
+
+No utilice `deploy -f` por comodidad. Las fases existen para expresar con precisión la intención.
+
+## Utilice `release` como decisión
+
+No haga release simplemente porque el build haya terminado.
+
+Hágala cuando haya decidido que el resultado está bien.
+
+## Use `-v` para trabajo diario
+
+`-v` suele ofrecer suficiente contexto para ver repositorios y artefactos sin convertir la consola en una transcripción completa.
+
+Reserve `-V` para seguimiento fino.
+
+## Use `-t` para lotes
+
+`tolerant` es especialmente útil cuando trabaja sobre muchos repositorios y prefiere obtener una visión completa de cuáles fallan.
+
+## Mantenga `iasi-common` como fuente
+
+Cuando una copia compartida mejora en un repositorio:
+
+```text
+validar
+→ promover a iasi-common
+→ sync
+```
+
+No sincronice versiones arbitrarias entre repositorios.
+

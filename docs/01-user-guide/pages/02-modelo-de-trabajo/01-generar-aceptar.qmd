@@ -1,0 +1,32 @@
+---
+title: "Generar no es aceptar"
+---
+
+El modelo distingue dos estados deliberadamente:
+
+```text
+outputs/
+```
+
+contiene resultados generados durante el trabajo.
+
+```text
+releases/
+```
+
+contiene resultados que el ingeniero ha aceptado explícitamente.
+
+Por eso:
+
+```text
+build ≠ release
+publish ≠ release
+commit ≠ release
+```
+
+`release` es la operación mediante la que se dice:
+
+> Este resultado está bien. Puede convertirse en material de entrega.
+
+Esta separación permite iterar, probar, publicar resultados intermedios y hacer commits sin modificar lo que ya se considera una release válida.
+

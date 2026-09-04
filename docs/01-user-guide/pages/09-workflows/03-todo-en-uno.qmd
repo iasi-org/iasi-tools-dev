@@ -1,0 +1,28 @@
+---
+title: "Todo en uno"
+---
+
+Cuando quiere realizar toda la preparación y entrega:
+
+```powershell
+iasi-dev deploy -f
+```
+
+La cadena es:
+
+```text
+build
+→ publish
+→ release
+→ commit
+→ push
+```
+
+Para un conjunto grande de repositorios en el que prefiera continuar aunque alguno falle:
+
+```powershell
+iasi-dev deploy -f -t
+```
+
+Los repositorios que fallen dejan de participar en las fases siguientes.
+

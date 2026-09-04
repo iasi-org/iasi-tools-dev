@@ -1,0 +1,20 @@
+---
+title: "Publicar y revisar"
+---
+
+Para reconstruir y publicar un repositorio:
+
+```powershell
+iasi-dev publish -f iasi-quarto
+```
+
+Después puede revisar los resultados generados.
+
+Si todavía no quiere aceptarlos como release, no ejecute `release`.
+
+Cuando estén correctos:
+
+```powershell
+iasi-dev release iasi-quarto
+```
+

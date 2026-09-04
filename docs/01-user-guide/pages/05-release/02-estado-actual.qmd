@@ -1,0 +1,16 @@
+---
+title: "Estado actual de release"
+---
+
+La semántica de release ya está definida:
+
+```text
+outputs/ → releases/
+```
+
+La copia física exacta todavía depende de cerrar el mapeo definitivo entre ambos árboles.
+
+Mientras esa decisión no esté cerrada, `release` puede existir como fase reconocible y mostrar sus mensajes, pero no debe inventar reglas destructivas de copia, limpieza o sobrescritura.
+
+Esta limitación es intencionada: es preferible una frontera explícita pendiente que una política implícita incorrecta.
+

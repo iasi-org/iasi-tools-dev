@@ -1,0 +1,23 @@
+---
+title: "Commit full"
+---
+
+Con:
+
+```powershell
+iasi-dev commit -f iasi-quarto
+```
+
+commit prepara primero la publicación:
+
+```text
+build
+→ publish
+→ commit
+→ push
+```
+
+No crea una release.
+
+Esto permite actualizar y versionar material generado sin afirmar que deba convertirse en la release aceptada.
+
