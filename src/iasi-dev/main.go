@@ -278,8 +278,6 @@ func runCommand(command string, arguments Arguments, directories []string) {
 		runCommit(arguments, directories)
 	case "release":
 		runRelease(arguments, directories)
-	case "deploy":
-		runDeploy(arguments, directories)
 	default:
 		cli.Error("Comando desconocido: %q", command)
 		os.Exit(RC.InvalidArguments)
@@ -670,8 +668,7 @@ func appendLog(logFile string, data []byte) error {
 	return err
 }
 
-// runRelease promotes the selected repositories and returns those completed successfully.
-// With -f, each repository is committed and pushed only after its release succeeds.
+// runRelease promotes the selected repositories, then commits and pushes each one only after its release succeeds.
 func runRelease(arguments Arguments, repositories []string) []string {
 	released := []string{}
 
@@ -682,7 +679,7 @@ func runRelease(arguments Arguments, repositories []string) []string {
 
 		cli.Info("Generando release de %s", filepath.Base(repository))
 		err := releaseRepository(repository, arguments)
-		if err == nil && arguments.Full {
+		if err == nil {
 			err = commitRepository(repository, arguments)
 		}
 		if err == nil {
@@ -703,21 +700,6 @@ func runRelease(arguments Arguments, repositories []string) []string {
 	return released
 }
 
-// runDeploy executes the complete build/publish/release/commit cycle when full.
-func runDeploy(arguments Arguments, repositories []string) []string {
-	if arguments.Full {
-		repositories = runPublish(arguments, repositories)
-
-		releaseArguments := arguments
-		releaseArguments.Full = false
-		repositories = runRelease(releaseArguments, repositories)
-
-		arguments.Full = false
-	}
-
-	return runCommit(arguments, repositories)
-}
-
 // printHelp shows the command-line help.
 func printHelp() {
 	cli.Direct(`IASI Dev
@@ -731,7 +713,6 @@ Commands:
   publish    Publish
   release    Release
   commit     Commit and push
-  deploy     Deploy
   sync       Sync shared files from iasi-common
 `)
 }

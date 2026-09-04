@@ -9,6 +9,5 @@ const (
 	Publish          = 20
 	Commit           = 30
 	Release          = 40
-	Deploy           = 50
 	Sync             = 60
 )
