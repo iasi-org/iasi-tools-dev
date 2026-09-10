@@ -1,0 +1,350 @@
+## Instalar `iasi.quarto`
+
+`iasi.quarto` se distribuye actualmente desde su repositorio de GitHub:
+
+```text
+iasi-org/iasi-quarto
+```
+
+El nombre del repositorio utiliza un guion:
+
+```text
+iasi-quarto
+```
+
+El nombre del paquete de R utiliza un punto:
+
+```text
+iasi.quarto
+```
+
+Esta diferencia aparece en la instalación y en el uso:
+
+```r
+remotes::install_github("iasi-org/iasi-quarto")
+
+library(iasi.quarto)
+```
+
+## Instalar `remotes`
+
+La instalación desde GitHub puede realizarse con el paquete `remotes`.
+
+Si todavía no está instalado:
+
+```r
+install.packages("remotes")
+```
+
+Esta operación solo es necesaria una vez por biblioteca de R.
+
+Puede comprobarse su disponibilidad con:
+
+```r
+requireNamespace(
+  "remotes",
+  quietly = TRUE
+)
+```
+
+El resultado esperado es:
+
+```text
+TRUE
+```
+
+## Instalar la versión actual
+
+Para instalar la versión disponible en la rama principal del repositorio:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto"
+)
+```
+
+`remotes` descarga el código fuente, resuelve las dependencias declaradas por el paquete y ejecuta la instalación en la biblioteca activa de R.
+
+Una vez terminada:
+
+```r
+library(iasi.quarto)
+```
+
+La carga debe completarse sin errores.
+
+## Instalar una versión concreta
+
+Una instalación reproducible debe indicar la versión que necesita.
+
+Por ejemplo, para instalar la versión `0.5.0`:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto@v0.5.0"
+)
+```
+
+La referencia situada después de `@` puede ser:
+
+```text
+una etiqueta
+una rama
+un commit
+```
+
+Una etiqueta publicada es la opción natural para una versión estable:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto@v0.5.0"
+)
+```
+
+Un commit permite fijar exactamente el código utilizado:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto@<commit>"
+)
+```
+
+La instalación sin referencia:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto"
+)
+```
+
+utiliza el estado actual de la rama predeterminada y puede cambiar con el tiempo.
+
+## Actualizar el paquete
+
+Para actualizar una instalación existente, se ejecuta de nuevo la instalación:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto"
+)
+```
+
+No es necesario desinstalar previamente el paquete.
+
+Cuando `iasi.quarto` ya está cargado en la sesión, R puede mantener archivos del paquete en uso, especialmente en Windows.
+
+En ese caso:
+
+```text
+reinicie la sesión de R
+vuelva a ejecutar la instalación
+cargue de nuevo el paquete
+```
+
+En RStudio, la sesión puede reiniciarse desde:
+
+```text
+Session
+  -> Restart R
+```
+
+Después:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto"
+)
+
+library(iasi.quarto)
+```
+
+## Comprobar la versión instalada
+
+La versión activa puede consultarse con:
+
+```r
+packageVersion("iasi.quarto")
+```
+
+Para la versión `0.5.0`, el resultado será equivalente a:
+
+```text
+[1] '0.5.0'
+```
+
+También puede consultarse la descripción completa del paquete:
+
+```r
+packageDescription("iasi.quarto")
+```
+
+La ruta desde la que se ha cargado puede obtenerse con:
+
+```r
+find.package("iasi.quarto")
+```
+
+Esta comprobación resulta útil cuando existen varias bibliotecas de R y no está claro cuál contiene la instalación activa.
+
+## Biblioteca de instalación
+
+R instala el paquete en una de las rutas declaradas por:
+
+```r
+.libPaths()
+```
+
+La primera ruta suele ser la biblioteca utilizada por defecto.
+
+Puede consultarse antes de instalar:
+
+```r
+.libPaths()
+```
+
+Y comprobar después dónde quedó instalado:
+
+```r
+find.package("iasi.quarto")
+```
+
+Para instalar expresamente en una biblioteca concreta:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto",
+  lib = "path/to/library"
+)
+```
+
+La misma ruta debe estar disponible en `.libPaths()` cuando se cargue el paquete.
+
+## Dependencias
+
+Las dependencias declaradas por `iasi.quarto` se instalan durante el proceso cuando no están disponibles.
+
+La instalación no incorpora:
+
+```text
+Quarto CLI
+una distribución de TeX
+servicios externos utilizados por la publicación
+```
+
+Esos componentes pertenecen al entorno de construcción y deben estar preparados por separado.
+
+El paquete puede instalarse correctamente aunque todavía falte TeX. En ese caso, podrá cargarse y construir HTML, pero el renderizado PDF no estará completo hasta que Quarto disponga de una distribución de TeX.
+
+## Instalación desde una copia local
+
+Cuando ya existe una copia local del repositorio, puede instalarse directamente desde su raíz.
+
+Con `remotes`:
+
+```r
+remotes::install_local(
+  "path/to/iasi-quarto"
+)
+```
+
+Durante el desarrollo del propio paquete también puede utilizarse:
+
+```r
+devtools::install(
+  "path/to/iasi-quarto"
+)
+```
+
+La ruta debe señalar el directorio que contiene el archivo:
+
+```text
+DESCRIPTION
+```
+
+La instalación local utiliza el estado actual de los archivos, incluidos los cambios que todavía no se hayan publicado en GitHub.
+
+## Cargar el paquete
+
+La instalación coloca el paquete en una biblioteca de R.
+
+Para utilizarlo en una sesión:
+
+```r
+library(iasi.quarto)
+```
+
+Esto incorpora su API pública:
+
+```r
+validate()
+build()
+```
+
+También puede llamarse una función sin cargar todo el paquete:
+
+```r
+iasi.quarto::validate()
+```
+
+```r
+iasi.quarto::build()
+```
+
+Esta forma hace explícito el paquete al que pertenece cada función.
+
+## Instalación reproducible
+
+Para un entorno personal de desarrollo puede ser suficiente instalar la rama principal:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto"
+)
+```
+
+Para una construcción que deba repetirse en otro equipo o en integración continua, debe fijarse una versión:
+
+```r
+remotes::install_github(
+  "iasi-org/iasi-quarto@v0.5.0"
+)
+```
+
+De este modo, el código de la publicación y la herramienta que interpreta su estructura evolucionan de forma controlada.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+rectangle "GitHub" as github
+rectangle "remotes" as remotes
+rectangle "Biblioteca de R" as library
+rectangle "iasi.quarto" as iasi
+rectangle "Publicación" as publication
+
+github --> remotes
+remotes --> library
+library --> iasi
+iasi --> publication
+@enduml
+```
+
+## Instalación mínima
+
+La secuencia mínima completa es:
+
+```r
+install.packages("remotes")
+
+remotes::install_github(
+  "iasi-org/iasi-quarto@v0.5.0"
+)
+
+library(iasi.quarto)
+
+packageVersion("iasi.quarto")
+```
+
+La instalación termina cuando R puede cargar el paquete desde su biblioteca.
+
+La siguiente comprobación consiste en verificar que `iasi.quarto` reconoce una publicación real y puede ejecutar su ciclo de construcción.

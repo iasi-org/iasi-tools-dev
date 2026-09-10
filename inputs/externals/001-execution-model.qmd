@@ -1,0 +1,117 @@
+---
+title: "IASI Dev: Modelo de ejecución"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Principio
+
+`iasi-dev` es un frontend fino de orquestación.
+
+Cada función padre debe coordinar funciones hijas claras. Las herramientas especializadas deciden cómo realizar el trabajo específico de cada tecnología.
+
+El flujo de control debe poder leerse aproximadamente como pseudocódigo.
+
+# Contrato común de fases sobre repositorios
+
+Las fases que trabajan sobre repositorios deben usar el mismo contrato conceptual:
+
+```go
+func runX(arguments Arguments, repositories []string) []string
+```
+
+Una fase:
+
+1. recibe una lista ordenada de repositorios;
+2. procesa cada repositorio según la responsabilidad de esa fase;
+3. devuelve un subconjunto ordenado de la lista de entrada;
+4. no inventa repositorios ni cambia su orden relativo.
+
+Formalmente:
+
+```text
+runX(repositories) ⊆ repositories
+```
+
+# Reglas de supervivencia de repositorios
+
+Para un repositorio que entra en una fase:
+
+- **procesado correctamente**: permanece en la lista devuelta;
+- **contiene artefactos o tipos ignorados por esa fase**: permanece en la lista devuelta;
+- **falla y está activo tolerant**: se elimina de la lista devuelta y continúa el procesamiento;
+- **falla y tolerant no está activo**: la fase detiene inmediatamente la ejecución con su propio código de retorno.
+
+Un artefacto ignorado no convierte al repositorio en fallido.
+
+Un repositorio no debe añadirse a la lista de salida antes de que la fase haya terminado correctamente para ese repositorio.
+
+# Propiedad de los errores
+
+Las funciones que realizan trabajo y pueden fallar deben devolver `error`.
+
+La función que posee la decisión de política debe decidir qué hacer con ese error.
+
+Cuando una fase es responsable de detener la ejecución, debe detenerla ahí. No debe propagar el error hacia arriba únicamente para que `main()` haga el `exit`.
+
+Ejemplo:
+
+```text
+buildQuarto
+    ↓ error
+buildArtifact
+    ↓ error
+runBuild
+    ├── tolerant → avisa, elimina el repositorio, continúa
+    └── normal   → termina con RC.Build
+```
+
+# Orquestación full
+
+`-f` significa **full**, no simplemente force.
+
+Un comando con `-f` puede invocar la fase lógica inmediatamente anterior, conservando el mismo contrato de filtrado de repositorios.
+
+La composición prevista es:
+
+```text
+publish -f
+→ build
+→ publish
+
+release -f
+→ publish -f
+    → build
+    → publish
+→ release
+
+deploy -f
+→ release -f
+    → publish -f
+        → build
+        → publish
+    → release
+→ commit
+→ push
+```
+
+Una fase padre no debe duplicar trabajo que ya haya delegado en una fase hija.
+
+# Operación explícita
+
+La orquestación es opcional.
+
+El ingeniero puede ejecutar:
+
+```text
+build
+publish
+release
+commit
+```
+
+de forma independiente.
+
+Esta capacidad es un requisito metodológico, no solo una comodidad de CLI.

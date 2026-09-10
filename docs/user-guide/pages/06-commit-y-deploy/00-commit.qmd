@@ -1,0 +1,30 @@
+---
+title: "Commit y push"
+---
+
+`commit` trabaja a nivel Git del repositorio.
+
+```powershell
+iasi-dev commit iasi-quarto
+```
+
+realiza conceptualmente:
+
+```text
+git add
+→ commit si hay cambios
+→ push si hay commits pendientes
+```
+
+Que no haya cambios no es un error.
+
+Que no haya nada pendiente de push tampoco es un error.
+
+Puede indicar el mensaje:
+
+```powershell
+iasi-dev commit --message "actualiza manual" iasi-quarto
+```
+
+Si no se especifica, se utiliza un mensaje basado en el comando ejecutado.
+

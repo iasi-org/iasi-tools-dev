@@ -1,0 +1,15 @@
+{
+  "hash": "18b8bbe2757efcba40a41b3de4a80b13",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Comandos\n\n\n::: {#tbl-comandos .cell tbl-cap='Comandos principales'}\n::: {.cell-output-display}\n\n\n|Comando  |Finalidad                                                   |\n|:--------|:-----------------------------------------------------------|\n|build    |Construir los targets seleccionados.                        |\n|publish  |Publicar los targets seleccionados.                         |\n|commit   |Procesar los cambios de los repositorios seleccionados.     |\n|release  |Materializar la estructura de release.                      |\n|workflow |Ejecutar un flujo de trabajo de IASI.                       |\n|sync     |Sincronizar elementos compartidos desde su origen canónico. |\n\n\n:::\n:::\n\n\n## `build`\n\n```text\niasi-dev build [targets...]\n```\n\nConstruye los targets seleccionados utilizando el mecanismo adecuado para cada artefacto IASI.\n\n## `publish`\n\n```text\niasi-dev publish [targets...]\n```\n\nPublica los targets seleccionados.\n\n## `commit`\n\n```text\niasi-dev commit [targets...]\n```\n\nProcesa los cambios de los repositorios seleccionados.\n\nLa operación comprueba si existen cambios, los incorpora al commit y crea el commit correspondiente. Cuando la ejecución no es local, puede realizar también la operación remota definida para el proceso.\n\nSi no hay cambios pendientes, el resultado es “nada que hacer”, no un error.\n\nPuede indicarse un mensaje:\n\n```text\niasi-dev commit --message \"Actualización de documentación\" iasi-tools-dev\n```\n\n## `release`\n\n```text\niasi-dev release [targets...]\n```\n\nMaterializa la estructura de release definida para el proyecto.\n\n## `workflow`\n\n```text\niasi-dev workflow [targets...]\n```\n\nEjecuta un flujo de trabajo de IASI sobre los targets seleccionados.\n\n## `sync`\n\n```text\niasi-dev sync <elemento...>\n```\n\nSincroniza un elemento compartido desde su origen canónico hacia las copias existentes en el workspace.\n\n```text\ncommon\n  ↓\ncopias existentes\n```\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

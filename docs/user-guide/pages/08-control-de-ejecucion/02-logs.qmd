@@ -1,0 +1,30 @@
+---
+title: "Logs"
+---
+
+Cada ejecución crea un único log.
+
+Por defecto:
+
+```text
+<directorio actual>/logs/
+```
+
+con un nombre similar a:
+
+```text
+iasi-build-20260904135416.log
+```
+
+El log pertenece a la ejecución completa, no a un repositorio concreto.
+
+Incluye:
+
+- mensajes de `iasi-dev`;
+- stdout de herramientas externas;
+- stderr de herramientas externas.
+
+Incluso con `-s`, el log sigue registrando la ejecución.
+
+Cuando un comando falla, el log es el primer lugar que debe consultar.
+

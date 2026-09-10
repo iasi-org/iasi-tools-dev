@@ -1,0 +1,22 @@
+---
+title: "Release full"
+---
+
+Para construir, publicar y aceptar en una única operación:
+
+```powershell
+iasi-dev release -f iasi-quarto
+```
+
+El flujo es:
+
+```text
+build
+→ publish
+→ release
+```
+
+`release` no hace commit.
+
+Puede aceptar una release y decidir después cuándo guardar o desplegar el cambio.
+

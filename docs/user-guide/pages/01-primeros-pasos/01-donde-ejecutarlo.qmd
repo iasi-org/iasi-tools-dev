@@ -1,0 +1,40 @@
+---
+title: "Dónde ejecutarlo"
+---
+
+La ubicación habitual es el directorio que contiene los repositorios con los que está trabajando.
+
+Por ejemplo:
+
+```text
+C:\iasi-org\
+├── iasi-common\
+├── iasi-quarto\
+├── iasi-tools-dev\
+└── introducing-iasi\
+```
+
+Desde ahí:
+
+```powershell
+iasi-dev build
+```
+
+considera los directorios hijos directos.
+
+También puede limitar la operación:
+
+```powershell
+iasi-dev build iasi-quarto
+```
+
+o seleccionar varios:
+
+```powershell
+iasi-dev build iasi-quarto introducing-iasi
+```
+
+Las rutas relativas se interpretan desde el directorio actual. También puede utilizar rutas absolutas.
+
+Los directorios `tests` se ignoran.
+

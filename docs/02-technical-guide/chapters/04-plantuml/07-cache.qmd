@@ -1,0 +1,647 @@
+## Caché de diagramas
+
+La extensión PlantUML puede conservar los diagramas compilados y reutilizarlos en construcciones posteriores.
+
+La configuración recomendada activa esta capacidad:
+
+```yaml
+filter-options:
+  plantuml:
+    cache: true
+```
+
+La caché evita solicitar al servidor una imagen que ya fue generada con la misma fuente y la misma configuración relevante.
+
+```text
+diagrama sin cambios
+  -> reutilizar imagen
+
+diagrama modificado
+  -> compilar de nuevo
+```
+
+No sustituye al servidor PlantUML ni a la fuente del diagrama.
+
+Es un almacén local de artefactos derivados.
+
+## Por qué existe
+
+Sin caché, cada construcción tendría que enviar de nuevo todos los diagramas al servidor.
+
+```text
+10 diagramas
+  -> 10 peticiones en cada build
+```
+
+Con caché:
+
+```text
+10 diagramas sin cambios
+  -> 0 compilaciones nuevas
+
+1 diagrama modificado
+  -> 1 compilación nueva
+```
+
+Esto aporta:
+
+```text
+construcciones más rápidas
+menos tráfico hacia el servidor
+menos trabajo repetido
+mayor estabilidad durante el desarrollo
+```
+
+La mejora resulta especialmente visible en publicaciones grandes o cuando el servidor se encuentra en otra máquina.
+
+## Ubicación
+
+La caché de PlantUML se guarda dentro del espacio de trabajo de Quarto:
+
+```text
+.quarto/plantuml/
+```
+
+Su contenido pertenece a la construcción local.
+
+No forma parte del contenido editorial de la publicación.
+
+```text
+chapters/
+resources/
+_quarto.yml
+  -> fuentes del proyecto
+
+.quarto/plantuml/
+  -> artefactos derivados
+```
+
+La carpeta puede eliminarse y regenerarse.
+
+## Identidad de un diagrama
+
+La extensión calcula una identidad para cada compilación.
+
+En la implementación actual intervienen:
+
+```text
+fuente preparada
+servidor configurado
+formato de salida
+versión de la extensión
+```
+
+La fuente preparada incluye el contenido de los estilos compartidos.
+
+Por tanto:
+
+```text
+cambia el bloque
+  -> cambia la identidad
+
+cambia iasi.puml
+  -> cambia la identidad
+
+cambia el servidor
+  -> cambia la identidad
+
+cambia el formato
+  -> cambia la identidad
+
+cambia la versión de la extensión
+  -> cambia la identidad
+```
+
+La identidad se calcula mediante un resumen criptográfico del contenido relevante.
+
+El nombre final no intenta ser legible para una persona.
+
+Su función es representar de forma estable una compilación concreta.
+
+## Flujo de lectura
+
+Cuando la extensión encuentra un bloque PlantUML:
+
+```text
+1. lee la configuración
+2. incorpora los estilos
+3. calcula la identidad
+4. consulta la caché
+5. reutiliza o compila
+6. entrega la imagen a Pandoc
+```
+
+El flujo puede representarse así:
+
+```{.plantuml}
+@startuml
+top to bottom direction
+
+start
+
+:Leer bloque PlantUML;
+:Aplicar estilos;
+:Calcular identidad;
+
+if (¿Existe en caché?) then (sí)
+  :Leer imagen almacenada;
+else (no)
+  :Solicitar imagen al servidor;
+  :Guardar imagen en caché;
+endif
+
+:Insertar imagen en el documento;
+
+stop
+@enduml
+```
+
+## Acierto de caché
+
+Existe un acierto de caché cuando la identidad calculada ya tiene una imagen almacenada.
+
+```text
+cache hit
+  -> no se llama al servidor
+  -> se reutiliza la imagen
+```
+
+Esto ocurre normalmente cuando:
+
+```text
+el bloque no ha cambiado
+los estilos no han cambiado
+la configuración relevante no ha cambiado
+la entrada sigue presente
+```
+
+El resultado debe ser idéntico al de la compilación original.
+
+## Fallo de caché
+
+Existe un fallo de caché cuando no se encuentra una entrada válida.
+
+```text
+cache miss
+  -> se llama al servidor
+  -> se recibe una imagen
+  -> se almacena
+```
+
+Un fallo de caché no es un error.
+
+Es el comportamiento normal para:
+
+```text
+un diagrama nuevo
+un diagrama modificado
+un estilo modificado
+una caché recién eliminada
+una versión nueva de la extensión
+```
+
+## Caché activada
+
+La configuración habitual es:
+
+```yaml
+cache: true
+```
+
+Con ella, las construcciones repetidas reutilizan resultados.
+
+Esta opción es apropiada para:
+
+```text
+desarrollo local
+documentación extensa
+servidores compartidos
+integración continua con caché persistente
+```
+
+La caché debe considerarse una optimización segura, no una fuente de verdad.
+
+## Caché desactivada
+
+Puede desactivarse globalmente:
+
+```yaml
+filter-options:
+  plantuml:
+    cache: false
+```
+
+En ese modo, cada diagrama se solicita de nuevo al servidor.
+
+```text
+cada build
+  -> compilar todos los diagramas
+```
+
+Esto puede ser útil para:
+
+```text
+probar el servidor
+diagnosticar una modificación del compilador
+comparar resultados
+confirmar que una imagen se regenera
+```
+
+No es recomendable como configuración permanente cuando la publicación contiene numerosos diagramas.
+
+## Desactivar la caché en un bloque
+
+La infraestructura admite una excepción local:
+
+````qmd
+```{.plantuml cache="false"}
+@startuml
+Alice -> Bob: Compilación forzada
+@enduml
+```
+````
+
+Esto permite probar un diagrama concreto sin cambiar la configuración de toda la publicación.
+
+Debe utilizarse de forma temporal.
+
+Una publicación no debería mezclar arbitrariamente diagramas con y sin caché sin una razón documentada.
+
+## Limpiar la caché
+
+Cuando es necesario regenerar todos los diagramas, debe eliminarse únicamente la caché de PlantUML.
+
+En PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force .quarto\plantuml -ErrorAction SilentlyContinue
+```
+
+Después, la siguiente construcción vuelve a solicitar las imágenes al servidor.
+
+```r
+build(
+  format = "html"
+)
+```
+
+No es necesario eliminar:
+
+```text
+todos los archivos PNG del proyecto
+todos los archivos SVG
+la carpeta .quarto completa
+los directorios de salida HTML o PDF
+```
+
+Una limpieza quirúrgica evita destruir otros artefactos útiles.
+
+## Cuándo limpiar
+
+La limpieza manual puede ser apropiada cuando:
+
+```text
+se ha modificado el compilador
+se sospecha que una entrada está dañada
+se ha cambiado la política de formato
+se está probando una versión nueva del servidor
+se necesita reproducir una construcción limpia
+```
+
+No debería ser el primer paso ante cualquier error.
+
+Antes conviene identificar si el problema pertenece a:
+
+```text
+la fuente PlantUML
+la configuración
+el servidor
+la caché
+Quarto
+```
+
+Borrar la caché puede ocultar temporalmente un problema sin explicar su causa.
+
+## Cambios de estilo
+
+Los archivos de estilo se incorporan antes de calcular la identidad.
+
+Por tanto, una modificación real en:
+
+```text
+resources/plantuml/iasi.puml
+```
+
+debe producir nuevas imágenes.
+
+```text
+estilo anterior
+  -> identidad A
+  -> imagen A
+
+estilo nuevo
+  -> identidad B
+  -> imagen B
+```
+
+En condiciones normales no es necesario limpiar manualmente la caché al cambiar el estilo.
+
+La limpieza solo resulta necesaria cuando se sospecha una incoherencia, una entrada dañada o un problema durante el desarrollo de la propia extensión.
+
+## Cambio de formato
+
+La configuración recomendada utiliza:
+
+```yaml
+format: png
+```
+
+El formato participa en la identidad y en el nombre del recurso generado.
+
+```text
+misma fuente + PNG
+  -> entrada PNG
+
+misma fuente + SVG
+  -> entrada SVG
+```
+
+La implementación actual normaliza la salida efectiva a PNG.
+
+Por ello, la configuración y la caché deben mantener esa misma decisión.
+
+Cuando se cambia la política de formato de la extensión, conviene limpiar:
+
+```text
+.quarto/plantuml/
+```
+
+para evitar conservar artefactos pertenecientes a una etapa anterior del diseño.
+
+## Cambio de servidor
+
+La dirección del servidor también participa en la identidad.
+
+```yaml
+server: http://localhost:1025
+```
+
+y:
+
+```yaml
+server: http://plantuml.local:1025
+```
+
+producen identidades distintas aunque la fuente sea igual.
+
+Esta decisión evita asumir que dos servidores diferentes generan necesariamente el mismo resultado.
+
+Pueden utilizar:
+
+```text
+versiones distintas de PlantUML
+fuentes distintas
+configuraciones distintas
+dependencias distintas
+```
+
+El servidor forma parte del entorno de compilación.
+
+## Versión de la extensión
+
+La versión de la extensión participa en la identidad.
+
+Cuando cambia el comportamiento del compilador, una versión nueva evita reutilizar resultados generados por una implementación anterior.
+
+```text
+extensión 0.1.0
+  -> caché A
+
+extensión 0.2.0
+  -> caché B
+```
+
+Esto es importante cuando la extensión modifica:
+
+```text
+la preparación de la fuente
+la construcción de la URL
+el formato
+el MIME
+la incorporación de estilos
+```
+
+La versión no es únicamente información descriptiva.
+
+También protege la coherencia de los artefactos derivados.
+
+## Caché y disponibilidad del servidor
+
+Un diagrama presente en caché puede reutilizarse aunque el servidor no responda.
+
+```text
+entrada existente
+  -> construcción posible
+
+entrada ausente
+  -> se necesita el servidor
+```
+
+Esto mejora la tolerancia durante el desarrollo, pero tiene un límite claro.
+
+Una construcción limpia necesita acceso al servidor para regenerar todos los diagramas.
+
+Por tanto, la caché no debe utilizarse como sustituto de una infraestructura PlantUML disponible.
+
+## Caché en integración continua
+
+En un pipeline de integración continua pueden adoptarse dos estrategias.
+
+### Construcción limpia
+
+```text
+cada ejecución comienza sin caché
+```
+
+Ventajas:
+
+```text
+máxima independencia de artefactos previos
+verificación completa del servidor
+comportamiento fácil de reproducir
+```
+
+Coste:
+
+```text
+todos los diagramas se compilan de nuevo
+```
+
+### Caché persistente
+
+```text
+el pipeline conserva .quarto/plantuml
+```
+
+Ventajas:
+
+```text
+construcciones más rápidas
+menos solicitudes al servidor
+```
+
+Riesgos:
+
+```text
+la clave externa de caché debe estar bien diseñada
+la carpeta puede crecer
+debe poder invalidarse
+```
+
+La estrategia elegida debe ser explícita.
+
+La publicación no debe depender de una caché persistente para ser construible.
+
+## Versionado
+
+La carpeta:
+
+```text
+.quarto/plantuml/
+```
+
+normalmente no debe almacenarse en Git.
+
+La fuente verdadera está en:
+
+```text
+documentos .qmd
+archivos .puml
+configuración YAML
+código de la extensión
+```
+
+La caché puede regenerarse a partir de esas fuentes y del servidor.
+
+Por eso suele incluirse `.quarto/` en `.gitignore`.
+
+El repositorio debe conservar la receta, no cada plato que la cocina produjo ayer.
+
+## Crecimiento de la caché
+
+Cada identidad distinta puede crear una nueva entrada.
+
+La carpeta puede crecer cuando se realizan numerosos cambios en:
+
+```text
+diagramas
+estilos
+servidores
+versiones
+formatos
+```
+
+La extensión no necesita borrar automáticamente todas las entradas antiguas durante cada construcción.
+
+Una limpieza periódica puede hacerse cuando:
+
+```text
+el tamaño deja de ser razonable
+se termina una etapa de desarrollo
+se cambia de versión principal
+se prepara una construcción limpia
+```
+
+El comando continúa siendo:
+
+```powershell
+Remove-Item -Recurse -Force .quarto\plantuml -ErrorAction SilentlyContinue
+```
+
+## Diagnóstico
+
+Cuando un diagrama parece antiguo, conviene seguir este orden:
+
+```text
+1. comprobar que el archivo .qmd fue guardado
+2. comprobar que el estilo .puml fue guardado
+3. revisar la configuración efectiva
+4. confirmar qué compiler.lua está cargando Quarto
+5. limpiar .quarto/plantuml
+6. construir de nuevo
+```
+
+Si la URL del error contiene:
+
+```text
+/svg/
+```
+
+cuando se espera PNG, el problema no debe atribuirse automáticamente a la caché.
+
+Puede indicar:
+
+```text
+otra copia de la extensión
+una configuración distinta
+un compiler.lua no actualizado
+una normalización de formato que no se está ejecutando
+```
+
+La propia URL de PlantUML muestra el formato efectivo utilizado por el compilador.
+
+## Prueba de funcionamiento
+
+Puede comprobarse la caché con un diagrama pequeño.
+
+Primera construcción:
+
+```r
+build(
+  format = "html"
+)
+```
+
+El servidor debe recibir la compilación.
+
+Segunda construcción, sin cambios:
+
+```r
+build(
+  format = "html"
+)
+```
+
+La imagen debe reutilizarse.
+
+Después, cambie el texto:
+
+```plantuml
+Alice -> Bob: Mensaje modificado
+```
+
+La siguiente construcción debe generar una entrada nueva.
+
+Finalmente, restaure el contenido original.
+
+La extensión podrá reutilizar la entrada anterior si todavía existe.
+
+## Contrato de la caché
+
+La caché debe cumplir cuatro propiedades:
+
+```text
+determinista
+  la misma entrada produce la misma identidad
+
+invalidable
+  los cambios relevantes generan otra identidad
+
+desechable
+  puede eliminarse sin perder fuentes
+
+localizada
+  puede limpiarse sin borrar todo el proyecto
+```
+
+> La caché acelera el pipeline, pero nunca debe convertirse en la única memoria de cómo se construyó un diagrama.

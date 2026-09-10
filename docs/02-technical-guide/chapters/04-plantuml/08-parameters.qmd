@@ -1,0 +1,547 @@
+## Parámetros de los bloques PlantUML
+
+Un bloque PlantUML puede contener parámetros que modifican su compilación y atributos que controlan cómo se presenta la imagen dentro de Quarto.
+
+No pertenecen al mismo nivel.
+
+```text
+parámetros de compilación
+  modifican cómo se obtiene la imagen
+
+atributos de presentación
+  modifican cómo Quarto coloca la imagen
+```
+
+Esta distinción evita recompilar un diagrama únicamente porque cambia su tamaño, alineación o pie de figura.
+
+## Forma general
+
+Los parámetros se declaran en la cabecera del bloque:
+
+````qmd
+```{.plantuml width="80%" fig-cap="Pipeline de construcción"}
+@startuml
+Fuente -> Compilador
+Compilador -> Imagen
+@enduml
+```
+````
+
+La clase:
+
+```text
+.plantuml
+```
+
+identifica el bloque que debe procesar la extensión.
+
+Los demás valores se escriben como atributos:
+
+```text
+nombre="valor"
+```
+
+## Parámetros de compilación
+
+Los parámetros de compilación modifican el proceso utilizado para obtener la imagen.
+
+La extensión reconoce:
+
+```text
+server
+format
+cache
+```
+
+Estos parámetros pueden declararse globalmente en `_quarto.yml` o reemplazarse para un bloque concreto.
+
+## `server`
+
+`server` selecciona el servidor PlantUML utilizado por el bloque.
+
+Configuración global:
+
+```yaml
+filter-options:
+  plantuml:
+    server: http://localhost:1025
+```
+
+Excepción por bloque:
+
+````qmd
+```{.plantuml server="http://plantuml.local:1025"}
+@startuml
+Alice -> Bob: Mensaje
+@enduml
+```
+````
+
+La URL debe señalar la raíz del servidor.
+
+No debe incluir:
+
+```text
+/png
+/svg
+```
+
+La extensión añade el formato al construir la petición.
+
+El uso por bloque debe reservarse para situaciones concretas. Una publicación normal debería utilizar un servidor común.
+
+## `format`
+
+`format` indica el formato gráfico solicitado al servidor.
+
+La configuración recomendada es:
+
+```yaml
+format: png
+```
+
+También puede declararse en el bloque:
+
+````qmd
+```{.plantuml format="png"}
+@startuml
+Alice -> Bob: Mensaje
+@enduml
+```
+````
+
+La plataforma utiliza actualmente PNG como salida efectiva común para HTML y PDF.
+
+Por tanto, la configuración y los bloques deberían mantener:
+
+```text
+format="png"
+```
+
+El formato participa en la identidad de la caché porque modifica el recurso generado.
+
+## `cache`
+
+`cache` controla si el bloque puede reutilizar una compilación anterior.
+
+Configuración global:
+
+```yaml
+cache: true
+```
+
+Excepción por bloque:
+
+````qmd
+```{.plantuml cache="false"}
+@startuml
+Alice -> Bob: Compilación nueva
+@enduml
+```
+````
+
+Valores:
+
+```text
+true
+  reutiliza la caché cuando existe
+
+false
+  solicita una compilación nueva
+```
+
+Desactivar la caché por bloque resulta útil durante pruebas y diagnóstico.
+
+No debería utilizarse de forma permanente sin una razón concreta.
+
+## Atributos de presentación
+
+Los atributos de presentación no modifican la fuente enviada a PlantUML.
+
+Controlan la imagen que Quarto incorpora al documento.
+
+Los principales son:
+
+```text
+width
+height
+fig-cap
+fig-alt
+fig-align
+identificador
+```
+
+Estos atributos no deberían participar en la identidad de compilación.
+
+```text
+mismo diagrama + width="50%"
+mismo diagrama + width="100%"
+  -> una única imagen compilada
+  -> dos presentaciones diferentes
+```
+
+## `width`
+
+`width` establece el ancho con el que Quarto presenta la imagen.
+
+Porcentaje:
+
+````qmd
+```{.plantuml width="80%"}
+@startuml
+Fuente -> Imagen
+@enduml
+```
+````
+
+Unidad física:
+
+````qmd
+```{.plantuml width="14cm"}
+@startuml
+Fuente -> Imagen
+@enduml
+```
+````
+
+Otros ejemplos válidos dependen del formato de salida y de las unidades admitidas por Pandoc y Quarto:
+
+```text
+600px
+12cm
+5in
+75%
+```
+
+Para publicaciones HTML y PDF, los porcentajes y las unidades físicas pueden producir resultados diferentes.
+
+Debe comprobarse el resultado en ambos formatos.
+
+## `height`
+
+`height` establece la altura de presentación.
+
+````qmd
+```{.plantuml height="8cm"}
+@startuml
+Fuente -> Imagen
+@enduml
+```
+````
+
+También puede combinarse con `width`:
+
+````qmd
+```{.plantuml width="14cm" height="8cm"}
+@startuml
+Fuente -> Imagen
+@enduml
+```
+````
+
+Sin embargo, declarar ambas dimensiones puede deformar la imagen cuando la relación de aspecto no coincide con el PNG generado.
+
+La práctica recomendada es indicar únicamente `width` y permitir que Quarto conserve la proporción original.
+
+```text
+recomendado
+  width="80%"
+
+utilizar con cuidado
+  width="14cm" height="8cm"
+```
+
+## `fig-cap`
+
+`fig-cap` añade un pie de figura.
+
+````qmd
+```{.plantuml fig-cap="Pipeline de construcción de la publicación"}
+@startuml
+Fuente -> Preparación
+Preparación -> Quarto
+@enduml
+```
+````
+
+El texto se procesa como contenido Markdown.
+
+Puede combinarse con un identificador para crear referencias cruzadas.
+
+## Identificador
+
+El identificador se declara con `#`.
+
+````qmd
+```{.plantuml #fig-build-pipeline fig-cap="Pipeline de construcción"}
+@startuml
+Fuente -> Preparación
+Preparación -> Quarto
+@enduml
+```
+````
+
+Después puede referenciarse desde el texto:
+
+```qmd
+Como muestra la @fig-build-pipeline, la preparación ocurre antes del renderizado.
+```
+
+Para que Quarto lo trate como figura referenciable, el identificador debe seguir la convención:
+
+```text
+#fig-
+```
+
+Ejemplo:
+
+```text
+#fig-plantuml-server
+#fig-build-pipeline
+#fig-publication-flow
+```
+
+## `fig-alt`
+
+`fig-alt` proporciona una descripción alternativa para accesibilidad.
+
+````qmd
+```{.plantuml
+#fig-plantuml-flow
+fig-cap="Flujo de compilación PlantUML"
+fig-alt="Un documento Quarto pasa por la extensión Lua, el servidor PlantUML y termina convertido en una imagen PNG."
+}
+@startuml
+Documento -> Extension
+Extension -> Servidor
+Servidor -> PNG
+@enduml
+```
+````
+
+El texto alternativo debe explicar la información principal del diagrama.
+
+No debe limitarse a repetir el pie de figura.
+
+```text
+pie
+  nombre editorial de la figura
+
+texto alternativo
+  contenido y relaciones importantes
+```
+
+## `fig-align`
+
+`fig-align` controla la alineación de la figura.
+
+````qmd
+```{.plantuml fig-align="center" width="75%"}
+@startuml
+Fuente -> Imagen
+@enduml
+```
+````
+
+Valores habituales:
+
+```text
+left
+center
+right
+```
+
+La configuración más común para diagramas es:
+
+```text
+fig-align="center"
+```
+
+La alineación pertenece a la presentación y no modifica la compilación.
+
+## `caption`
+
+La extensión puede admitir `caption` como alias de `fig-cap`.
+
+````qmd
+```{.plantuml caption="Diagrama de secuencia"}
+@startuml
+Alice -> Bob: Mensaje
+@enduml
+```
+````
+
+Para mantener coherencia con Quarto, la forma recomendada es:
+
+```text
+fig-cap
+```
+
+## `label`
+
+Puede admitirse `label` como alternativa al identificador del bloque.
+
+Sin embargo, la sintaxis natural de Quarto es:
+
+````qmd
+```{.plantuml #fig-example}
+...
+```
+````
+
+Por claridad editorial, debe preferirse el identificador `#fig-...`.
+
+## Combinación recomendada
+
+Un bloque completo puede escribirse así:
+
+````qmd
+```{.plantuml
+#fig-publication-pipeline
+width="80%"
+fig-align="center"
+fig-cap="Pipeline de una publicación IASI Quarto"
+fig-alt="La fuente documental pasa por iasi.quarto, Quarto y el servidor PlantUML antes de producir HTML y PDF."
+}
+@startuml
+left to right direction
+
+rectangle "Fuente" as Source
+rectangle "iasi.quarto" as IASI
+rectangle "Quarto" as Quarto
+rectangle "PlantUML" as PlantUML
+rectangle "HTML / PDF" as Output
+
+Source --> IASI
+IASI --> Quarto
+Quarto --> PlantUML
+PlantUML --> Quarto
+Quarto --> Output
+@enduml
+```
+````
+
+En este ejemplo:
+
+```text
+#fig-publication-pipeline
+  identifica la figura
+
+width
+  controla el tamaño
+
+fig-align
+  controla la posición
+
+fig-cap
+  proporciona el pie
+
+fig-alt
+  describe el contenido
+
+la fuente PlantUML
+  define elementos y relaciones
+```
+
+## Qué parámetros modifican la caché
+
+Deben participar en la identidad de compilación:
+
+```text
+fuente preparada
+server
+format
+versión de la extensión
+estilos incorporados
+```
+
+No deben participar:
+
+```text
+width
+height
+fig-cap
+fig-alt
+fig-align
+identificador
+```
+
+La razón es sencilla:
+
+```text
+compilación
+  decide qué imagen se genera
+
+presentación
+  decide cómo se utiliza esa imagen
+```
+
+Cambiar el pie de figura no debería llamar al servidor PlantUML.
+
+Cambiar el ancho tampoco.
+
+Cambiar la fuente o el estilo sí debe generar una imagen nueva.
+
+## Parámetros globales y parámetros de bloque
+
+No todas las opciones globales tienen sentido dentro de un bloque.
+
+Configuración global:
+
+```text
+enabled
+styles
+server
+format
+cache
+```
+
+Configuración por bloque:
+
+```text
+server
+format
+cache
+width
+height
+fig-cap
+fig-alt
+fig-align
+identificador
+```
+
+`enabled` controla la extensión completa.
+
+`styles` define una política común de la publicación.
+
+Por tanto, no deberían modificarse arbitrariamente en cada diagrama.
+
+## Tabla de referencia
+
+| Parámetro | Ámbito | Función | Afecta a la compilación |
+|---|---|---|---|
+| `enabled` | Global | Activa o desactiva la extensión | Sí, detiene el procesamiento |
+| `styles` | Global | Incorpora estilos compartidos | Sí |
+| `server` | Global o bloque | Selecciona el servidor PlantUML | Sí |
+| `format` | Global o bloque | Selecciona el formato gráfico | Sí |
+| `cache` | Global o bloque | Activa o evita la reutilización | No cambia la imagen, pero cambia el proceso |
+| `width` | Bloque | Controla el ancho de presentación | No |
+| `height` | Bloque | Controla la altura de presentación | No |
+| `fig-cap` | Bloque | Añade el pie de figura | No |
+| `fig-alt` | Bloque | Añade descripción alternativa | No |
+| `fig-align` | Bloque | Controla la alineación | No |
+| `#fig-...` | Bloque | Identifica la figura | No |
+
+## Criterio de uso
+
+La regla práctica es:
+
+```text
+si cambia la imagen que debe producir PlantUML
+  es un parámetro de compilación
+
+si cambia cómo Quarto presenta la misma imagen
+  es un atributo de presentación
+```
+
+> PlantUML genera la imagen. Quarto decide cuánto ocupa, dónde aparece y cómo se referencia.

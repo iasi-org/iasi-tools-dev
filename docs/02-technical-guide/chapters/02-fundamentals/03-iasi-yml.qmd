@@ -1,0 +1,504 @@
+## El archivo `iasi.yml`
+
+`iasi.yml` describe cómo debe interpretar `iasi.quarto` una publicación.
+
+No sustituye a `_quarto.yml` ni contiene opciones de renderizado. Su función es declarar la organización editorial que `iasi.quarto` debe descubrir, comprobar y preparar antes de delegar la generación final en Quarto.
+
+La estructura actual es:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Las tres propiedades son opcionales. Cuando no se declaran, `iasi.quarto` utiliza sus valores predeterminados.
+
+## Valores predeterminados
+
+La configuración mínima válida es:
+
+```yaml
+publication:
+```
+
+También puede escribirse simplemente:
+
+```yaml
+publication: {}
+```
+
+En ambos casos, el resultado efectivo es:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Por tanto, estas dos configuraciones son equivalentes:
+
+```yaml
+publication: {}
+```
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Los valores predeterminados permiten crear una publicación convencional sin repetir configuración que ya forma parte del modelo.
+
+## `strategy`
+
+La propiedad `strategy` indica cómo debe interpretarse el contenido de cada carpeta inmediata del directorio de contenido.
+
+```yaml
+publication:
+  strategy: regular
+```
+
+Los valores admitidos son:
+
+```text
+regular
+structured
+direct
+```
+
+### `regular`
+
+En la estrategia `regular`, cada carpeta representa un capítulo compuesto por varios documentos parciales.
+
+```text
+chapters/
+└── 01-fundamentals/
+    ├── front-matter.quarto
+    ├── 00-index.qmd
+    ├── 01-publication.qmd
+    └── 02-project-structure.qmd
+```
+
+Durante la preparación, `iasi.quarto` genera:
+
+```text
+chapters/01-fundamentals/index.qmd
+```
+
+Ese archivo reúne los documentos parciales mediante inclusiones Quarto.
+
+```qmd
+{{{< include 00-index.qmd >}}}
+
+{{{< include 01-publication.qmd >}}}
+
+{{{< include 02-project-structure.qmd >}}}
+```
+
+En esta estrategia, el `index.qmd` de la carpeta es un artefacto derivado y pertenece a `iasi.quarto`.
+
+### `structured`
+
+En la estrategia `structured`, cada carpeta representa una parte y sus documentos son capítulos independientes.
+
+```text
+chapters/
+└── 01-fundamentals/
+    ├── index.qmd
+    ├── 01-publication.qmd
+    └── 02-project-structure.qmd
+```
+
+El `index.qmd` de la carpeta pertenece al autor y actúa como introducción de la parte.
+
+Los demás documentos se incorporan como capítulos independientes dentro de esa parte.
+
+### `direct`
+
+La estrategia `direct` conserva una relación más directa entre los documentos encontrados y la estructura entregada a Quarto.
+
+No genera capítulos compuestos y no asume que cada carpeta deba convertirse en una parte o en un capítulo ensamblado.
+
+Se utiliza cuando la publicación ya controla explícitamente su organización o cuando no encaja en las convenciones de `regular` y `structured`.
+
+## `content-dir`
+
+La propiedad `content-dir` indica dónde se encuentra el contenido organizado de la publicación.
+
+```yaml
+publication:
+  content-dir: chapters
+```
+
+El valor predeterminado es:
+
+```text
+chapters
+```
+
+Con esa configuración, `iasi.quarto` busca las carpetas editoriales en:
+
+```text
+publication/
+└── chapters/
+```
+
+Puede utilizarse otro nombre:
+
+```yaml
+publication:
+  content-dir: content
+```
+
+La publicación correspondiente podría ser:
+
+```text
+publication/
+├── content/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+`content-dir` se interpreta como una ruta relativa a la raíz de la publicación.
+
+No es una ruta relativa al directorio desde el que se ejecuta R ni al directorio de trabajo del usuario.
+
+## `numbered`
+
+La propiedad `numbered` indica si las carpetas y los documentos fuente deben seguir una convención de prefijos numéricos.
+
+```yaml
+publication:
+  numbered: true
+```
+
+Cuando su valor es `true`, las carpetas deben comenzar por uno o más dígitos seguidos de un guion:
+
+```text
+01-fundamentals
+02-installation
+10-reference
+```
+
+El patrón utilizado es:
+
+```text
+^[0-9]+-
+```
+
+Los documentos fuente `.qmd` deben seguir la misma convención:
+
+```text
+00-index.qmd
+01-publication.qmd
+02-project-structure.qmd
+```
+
+El patrón utilizado es:
+
+```text
+^[0-9]+-.*\.qmd$
+```
+
+Los prefijos determinan el orden editorial porque el descubrimiento se apoya en el orden de los nombres.
+
+Por ejemplo:
+
+```text
+01-introduction.qmd
+02-model.qmd
+10-reference.qmd
+```
+
+se procesa en ese mismo orden.
+
+### `numbered: false`
+
+Una publicación puede desactivar esta exigencia:
+
+```yaml
+publication:
+  numbered: false
+```
+
+En ese caso, `iasi.quarto` no exige prefijos numéricos en carpetas ni documentos.
+
+```text
+chapters/
+├── fundamentals/
+├── installation/
+└── usage/
+```
+
+y:
+
+```text
+introduction.qmd
+publication.qmd
+project-structure.qmd
+```
+
+siguen siendo nombres válidos.
+
+Desactivar la validación no añade un mecanismo alternativo de ordenación. La publicación continúa dependiendo del orden lexicográfico de los nombres encontrados.
+
+## Configuración parcial
+
+No es necesario declarar todas las propiedades.
+
+Por ejemplo:
+
+```yaml
+publication:
+  strategy: structured
+```
+
+produce esta configuración efectiva:
+
+```yaml
+publication:
+  strategy: structured
+  content-dir: chapters
+  numbered: true
+```
+
+Del mismo modo:
+
+```yaml
+publication:
+  numbered: false
+```
+
+mantiene `regular` como estrategia y `chapters` como directorio de contenido.
+
+`iasi.quarto` completa únicamente las propiedades ausentes. No sustituye valores que hayan sido declarados explícitamente.
+
+## Configuración válida completa
+
+Una publicación regular convencional puede declarar:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Una publicación estructurada puede declarar:
+
+```yaml
+publication:
+  strategy: structured
+  content-dir: chapters
+  numbered: true
+```
+
+Una publicación sin prefijos numéricos podría utilizar:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: content
+  numbered: false
+```
+
+## YAML mal formado
+
+`iasi.yml` debe ser un documento YAML válido.
+
+Por ejemplo, esta configuración es incorrecta:
+
+```yaml
+publication:
+  strategy regular
+```
+
+Falta el separador `:` entre la propiedad y su valor.
+
+Los errores sintácticos se detectan durante el descubrimiento, cuando `iasi.quarto` intenta leer el archivo.
+
+La publicación no puede continuar hacia la comprobación ni hacia la preparación mientras el YAML no pueda interpretarse.
+
+## Valores semánticamente inválidos
+
+Un documento puede ser YAML válido y, aun así, contener una configuración no admitida.
+
+Por ejemplo:
+
+```yaml
+publication:
+  strategy: automatic
+```
+
+`automatic` es una cadena válida desde el punto de vista de YAML, pero no es una estrategia reconocida por `iasi.quarto`.
+
+También es inválido:
+
+```yaml
+publication:
+  numbered: yes
+```
+
+Aunque algunas implementaciones históricas de YAML pueden interpretar `yes` como un valor lógico, el contrato de `iasi.quarto` espera una configuración inequívoca y debe expresarse como:
+
+```yaml
+publication:
+  numbered: true
+```
+
+o:
+
+```yaml
+publication:
+  numbered: false
+```
+
+Los valores semánticamente inválidos se rechazan durante la fase de comprobación.
+
+## Propiedades desconocidas
+
+El contrato de `iasi.yml` es explícito.
+
+Esta configuración contiene una propiedad desconocida:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+  language: es
+```
+
+`language` no pertenece al modelo de `iasi.quarto`.
+
+El idioma de la publicación debe configurarse en Quarto:
+
+```yaml
+lang: es
+```
+
+dentro de `_quarto.yml`.
+
+La presencia de propiedades desconocidas se considera un error porque puede ocultar erratas o configuraciones que el autor cree activas cuando en realidad no tienen ningún efecto.
+
+Por ejemplo:
+
+```yaml
+publication:
+  stratgy: regular
+```
+
+no debe ignorarse silenciosamente. La propiedad está mal escrita y la publicación debe informar del problema.
+
+## Separación de responsabilidades
+
+Cada archivo de configuración tiene una responsabilidad distinta.
+
+```text
+_quarto.yml
+  configuración común de Quarto
+
+_quarto-html.yml
+  configuración específica de HTML
+
+_quarto-pdf.yml
+  configuración específica de PDF
+
+iasi.yml
+  organización editorial interpretada por iasi.quarto
+```
+
+Por ejemplo, esta opción pertenece a `_quarto-html.yml`:
+
+```yaml
+format:
+  html:
+    theme: cosmo
+```
+
+Esta pertenece a `_quarto-pdf.yml`:
+
+```yaml
+format:
+  pdf:
+    toc: true
+```
+
+Y esta pertenece a `iasi.yml`:
+
+```yaml
+publication:
+  strategy: regular
+```
+
+Mantener esta separación evita que `iasi.quarto` se convierta en una segunda capa de configuración de Quarto.
+
+## Configuración y ciclo de construcción
+
+`iasi.yml` participa en las primeras fases del proceso:
+
+```text
+validate()
+  reconoce la publicación por su firma
+
+.discover()
+  lee iasi.yml y aplica valores predeterminados
+
+.check()
+  comprueba propiedades, valores y estructura
+
+.prepare()
+  construye los artefactos derivados según la estrategia
+```
+
+La configuración no se interpreta durante el renderizado.
+
+Cuando `.render()` se ejecuta, la publicación ya ha sido descubierta, comprobada y preparada.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+file "iasi.yml" as config
+rectangle ".discover()" as discover
+rectangle ".check()" as check
+rectangle ".prepare()" as prepare
+file "_book-structure.yml" as structure
+rectangle "Quarto" as quarto
+
+config --> discover
+discover --> check
+check --> prepare
+prepare --> structure
+structure --> quarto
+@enduml
+```
+
+## Un contrato pequeño
+
+`iasi.yml` contiene deliberadamente pocas propiedades.
+
+No pretende describir toda la publicación ni duplicar la configuración disponible en Quarto.
+
+Su contrato actual responde únicamente a tres preguntas:
+
+```text
+¿Cómo se interpreta el contenido?
+  strategy
+
+¿Dónde se encuentra?
+  content-dir
+
+¿Debe seguir una convención numérica?
+  numbered
+```
+
+Esa limitación mantiene la configuración legible y permite que la mayor parte del proyecto siga siendo Quarto abierto y reconocible.
+
+> `iasi.yml` no describe cómo se renderiza una publicación. Describe cómo debe entenderse antes de renderizarla.

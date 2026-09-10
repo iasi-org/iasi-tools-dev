@@ -1,0 +1,20 @@
+---
+title: "Build o publish falla"
+---
+
+Ejecute con mayor detalle si necesita seguir el progreso:
+
+```powershell
+iasi-dev build -V iasi-quarto
+```
+
+Después consulte el log indicado para esa ejecución.
+
+La salida completa de `R`, `Rscript`, Git y otras herramientas externas se dirige al log, aunque la consola muestre solo mensajes resumidos.
+
+Si necesita que otros repositorios continúen:
+
+```powershell
+iasi-dev build -t
+```
+

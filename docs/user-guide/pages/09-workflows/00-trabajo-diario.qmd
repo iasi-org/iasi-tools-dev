@@ -1,0 +1,15 @@
+---
+title: "Iterar sin tocar releases"
+---
+
+Durante trabajo normal puede construir y guardar cambios sin modificar la release aceptada:
+
+```powershell
+iasi-dev build iasi-quarto
+iasi-dev commit iasi-quarto
+```
+
+Puede repetir este ciclo tantas veces como sea necesario.
+
+`releases/` permanece fuera de esa iteración.
+

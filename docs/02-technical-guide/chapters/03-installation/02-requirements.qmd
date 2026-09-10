@@ -1,0 +1,254 @@
+## Requisitos
+
+`iasi.quarto` necesita dos componentes para funcionar:
+
+```text
+R
+Quarto
+```
+
+R ejecuta el paquete.
+
+Quarto procesa la publicación y genera los formatos finales.
+
+Para construir PDF también se necesita una distribución de TeX disponible para Quarto.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+rectangle "R" as r
+rectangle "iasi.quarto" as iasi
+rectangle "Quarto CLI" as quarto
+rectangle "HTML" as html
+rectangle "TeX" as tex
+rectangle "PDF" as pdf
+
+r --> iasi
+iasi --> quarto
+quarto --> html
+quarto --> tex
+tex --> pdf
+@enduml
+```
+
+## R
+
+`iasi.quarto` es un paquete de R y debe instalarse en una biblioteca accesible desde la sesión que ejecutará la construcción.
+
+Puede comprobarse la instalación de R desde la consola:
+
+```r
+R.version.string
+```
+
+El resultado debe mostrar la versión activa de R.
+
+También conviene comprobar dónde se instalarán y buscarán los paquetes:
+
+```r
+.libPaths()
+```
+
+No es necesario utilizar RStudio.
+
+El paquete puede ejecutarse desde:
+
+```text
+RStudio
+la consola de R
+Rscript
+un proceso automatizado
+un pipeline de integración continua
+```
+
+RStudio es un entorno de trabajo posible, no una dependencia de `iasi.quarto`.
+
+## Quarto
+
+`iasi.quarto` delega el renderizado final en la línea de comandos de Quarto.
+
+Por tanto, el ejecutable `quarto` debe estar instalado y disponible para el proceso de R.
+
+Desde una terminal:
+
+```bash
+quarto --version
+```
+
+Desde R:
+
+```r
+Sys.which("quarto")
+```
+
+El resultado de `Sys.which()` debe contener una ruta.
+
+Por ejemplo:
+
+```text
+quarto
+"C:\Program Files\Quarto\bin\quarto.exe"
+```
+
+Si devuelve una cadena vacía:
+
+```text
+quarto
+""
+```
+
+R no puede localizar el ejecutable mediante la variable `PATH`.
+
+También puede comprobarse la instalación completa desde una terminal:
+
+```bash
+quarto check
+```
+
+Esta orden informa sobre Quarto, Pandoc y los componentes auxiliares disponibles.
+
+## HTML
+
+La construcción HTML necesita:
+
+```text
+R
+iasi.quarto
+Quarto
+```
+
+No requiere una distribución de TeX.
+
+Una vez instalado el paquete, el formato puede comprobarse con:
+
+```r
+build(format = "html")
+```
+
+## PDF
+
+La construcción PDF añade una dependencia externa:
+
+```text
+una distribución de TeX
+```
+
+Puede utilizarse, por ejemplo:
+
+```text
+TinyTeX
+TeX Live
+MiKTeX
+```
+
+`iasi.quarto` no instala ni administra esa distribución.
+
+Quarto debe poder localizarla y utilizarla durante el renderizado.
+
+La comprobación práctica es:
+
+```r
+build(format = "pdf")
+```
+
+Si HTML funciona y PDF no, el primer elemento que debe revisarse es el entorno TeX, no la estructura de `iasi.quarto`.
+
+## Git
+
+Git no es una dependencia de ejecución.
+
+`iasi.quarto` puede cargar y construir una publicación sin que Git esté instalado.
+
+Sin embargo, Git resulta útil para:
+
+```text
+obtener el código desde un repositorio
+actualizar el paquete
+versionar las publicaciones
+trabajar con ramas y entregas
+```
+
+Su disponibilidad puede comprobarse desde una terminal:
+
+```bash
+git --version
+```
+
+La necesidad real de Git depende del método de instalación utilizado.
+
+## Acceso al repositorio
+
+Mientras `iasi.quarto` se distribuya desde un repositorio de código, la instalación necesita acceso a ese repositorio.
+
+El acceso puede realizarse mediante:
+
+```text
+HTTPS
+una copia local
+un archivo del paquete
+```
+
+Una vez instalado, el paquete no necesita consultar el repositorio para ejecutar `validate()` o `build()`.
+
+## Permisos de escritura
+
+Durante la preparación, `iasi.quarto` puede generar archivos dentro de la publicación:
+
+```text
+_book-structure.yml
+index.qmd de las carpetas regular
+```
+
+La cuenta que ejecuta la construcción debe tener permiso de escritura sobre el proyecto.
+
+También debe poder escribir en los directorios de salida y temporales utilizados por Quarto.
+
+Una publicación de solo lectura puede validarse, pero no podrá completar una preparación que necesite crear o actualizar artefactos.
+
+## Red y servicios externos
+
+La construcción básica de `iasi.quarto` no necesita un servicio remoto propio.
+
+Sin embargo, una publicación concreta puede utilizar recursos externos:
+
+```text
+repositorios de paquetes
+fuentes web
+bibliografía remota
+extensiones Quarto
+servidores de diagramas
+```
+
+Por ejemplo, el filtro PlantUML puede depender de un servidor configurado por la publicación.
+
+Esas dependencias pertenecen al proyecto documental o a sus extensiones, no al núcleo de `iasi.quarto`.
+
+## Comprobación mínima
+
+Antes de instalar el paquete, el entorno puede revisarse con:
+
+```r
+R.version.string
+Sys.which("quarto")
+```
+
+Y desde una terminal:
+
+```bash
+quarto --version
+quarto check
+```
+
+Para construir ambos formatos, la comprobación mínima es:
+
+```text
+R disponible
+Quarto disponible
+TeX disponible para PDF
+permisos de escritura sobre la publicación
+```
+
+No se necesita un entorno especial ni un editor concreto.
+
+> `iasi.quarto` organiza la construcción, pero utiliza las herramientas reales de R y Quarto que ya existen en el sistema.

@@ -1,0 +1,55 @@
+/*-- scss:defaults --*/
+
+$grid-body-width: 1200px;
+$grid-sidebar-width: 360px;
+
+$iasi-quarto-blue: #39729e;
+$navbar-bg: $iasi-quarto-blue;
+$navbar-fg: #ffffff;
+
+/*-- scss:rules --*/
+
+body {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+#quarto-document-content p,
+#quarto-document-content ul,
+#quarto-document-content ol {
+  max-width: 133ch;
+}
+
+:root {
+  --iasi-quarto-blue: #{$iasi-quarto-blue};
+}
+
+#quarto-document-content h1,
+#quarto-document-content h2,
+#quarto-document-content h3,
+#title-block-header h1 {
+  color: var(--iasi-quarto-blue);
+}
+
+#quarto-header .navbar-brand,
+#quarto-header .navbar-nav .nav-link,
+#quarto-header .navbar .quarto-navbar-tools a {
+  color: $navbar-fg !important;
+}
+
+.navbar-brand {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.nav-footer {
+  background: #eef5fb;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  font-size: 0.85rem;
+}
+
+#iasi-publish-date {
+  color: var(--bs-primary);
+  font-weight: 600;
+}

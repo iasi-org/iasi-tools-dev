@@ -1,0 +1,28 @@
+---
+title: "Continuar después de un error"
+---
+
+Por defecto, `iasi-dev` se detiene en el primer fallo relevante:
+
+```powershell
+iasi-dev build
+```
+
+Para procesar los demás repositorios aunque uno falle:
+
+```powershell
+iasi-dev build -t
+```
+
+Con `-t`:
+
+```text
+repo A → OK → continúa
+repo B → falla → se excluye
+repo C → OK → continúa
+```
+
+Las fases posteriores reciben solo los repositorios que siguen siendo válidos.
+
+`tolerant` no convierte un fallo en éxito. Permite continuar sin arrastrar el repositorio fallido.
+

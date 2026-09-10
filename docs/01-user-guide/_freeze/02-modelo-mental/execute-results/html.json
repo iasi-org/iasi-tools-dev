@@ -1,0 +1,15 @@
+{
+  "hash": "066e784dca422a35d48b112e21702874",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Modelo mental\n\nLa forma general de una llamada es:\n\n```text\niasi-dev command [flags] [parameters] [targets...]\n```\n\n\n::: {#tbl-modelo .cell tbl-cap='Modelo básico de `iasi-dev`'}\n::: {.cell-output-display}\n\n\n|Elemento   |Pregunta que responde                           |\n|:----------|:-----------------------------------------------|\n|Command    |¿Qué quiero hacer?                              |\n|Flags      |¿Cómo quiero modificar la ejecución?            |\n|Parameters |¿Qué valores adicionales necesita la operación? |\n|Targets    |¿Sobre qué elementos de IASI quiero actuar?     |\n\n\n:::\n:::\n\n\n## Comando\n\nEl comando expresa la operación solicitada.\n\n`build`, `publish`, `commit`, `release`, `workflow` y `sync` son operaciones diferentes, pero todas comparten el mismo modelo de invocación.\n\n## Flags y parámetros\n\nLos flags modifican el comportamiento de la ejecución. Algunos parámetros aportan valores, como un mensaje de commit o un formato determinado.\n\nNo todos los flags o parámetros tienen necesariamente sentido para todos los comandos.\n\n## Targets\n\nLos targets indican los elementos sobre los que debe aplicarse la operación.\n\n```text\niasi-dev build iasi-book-I\n```\n\nEn esta llamada, `build` es el comando e `iasi-book-I` es el target solicitado.\n\n## Lo solicitado y lo resuelto\n\n`iasi-dev` distingue entre los targets indicados por el usuario y los targets que finalmente debe procesar.\n\n```text\ntargets solicitados\n        ↓\nresolución\n        ↓\ntargets efectivos\n        ↓\nejecución\n```\n\nEsta separación permite que cada comando trabaje con targets ya preparados según las reglas de IASI.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

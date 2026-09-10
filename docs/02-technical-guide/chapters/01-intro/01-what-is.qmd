@@ -1,0 +1,76 @@
+# Qué es `iasi.quarto`
+
+`iasi.quarto` es una capa de organización y automatización construida sobre Quarto.
+
+Su propósito no es sustituir el modelo de publicación de Quarto, sino facilitar el trabajo cuando un proyecto empieza a crecer: aparecen más capítulos, más formatos, distintas estructuras documentales y la necesidad de repetir tareas de preparación y renderizado de forma predecible.
+
+## Una convención sobre Quarto
+
+Quarto ya sabe transformar documentos en libros, sitios web, artículos y otros formatos. `iasi.quarto` se ocupa de lo que ocurre alrededor de ese proceso:
+
+- descubrir la estructura del proyecto;
+- validar que esa estructura sea coherente;
+- preparar los artefactos necesarios;
+- renderizar uno o varios formatos;
+- coordinar la construcción de uno o varios libros.
+
+Quarto continúa siendo el motor de publicación. `iasi.quarto` actúa como capa de ingeniería.
+
+## El problema que resuelve
+
+En un proyecto pequeño, mantener manualmente `_quarto.yml` puede ser suficiente. Cuando el número de documentos aumenta, esa configuración empieza a concentrar demasiado conocimiento:
+
+- qué archivos forman parte del libro;
+- en qué orden deben aparecer;
+- cómo se organizan los capítulos;
+- qué perfiles existen;
+- qué formato debe generarse;
+- dónde se escriben los resultados.
+
+`iasi.quarto` convierte parte de ese conocimiento implícito en convenciones verificables.
+
+La estructura del proyecto deja de ser una colección de decisiones manuales y pasa a ser información que el framework puede descubrir, validar y preparar.
+
+## Qué aporta
+
+El flujo fundamental de `iasi.quarto` se divide en cuatro pasos:
+
+```r
+project = discover()
+validation = validate(project)
+publication = prepare(validation)
+render(publication)
+```
+
+En el uso habitual, `build()` coordina ese proceso completo.
+
+Cada etapa tiene una responsabilidad concreta:
+
+- `discover()` interpreta la estructura existente;
+- `validate()` comprueba que el proyecto sea coherente;
+- `prepare()` genera la configuración derivada necesaria;
+- `render()` delega en Quarto la producción de los formatos finales.
+
+Esta separación permite detectar los problemas antes de iniciar un renderizado y hace que cada transformación sea explícita.
+
+## Qué no pretende ser
+
+`iasi.quarto` no es:
+
+- un sustituto de Quarto;
+- un nuevo lenguaje documental;
+- un generador de contenido;
+- una plantilla cerrada;
+- una abstracción que oculte por completo la configuración de Quarto.
+
+El proyecto sigue siendo un proyecto Quarto normal. Sus archivos pueden abrirse, editarse y renderizarse con las herramientas habituales.
+
+La diferencia es que ciertas decisiones estructurales se expresan mediante convenciones que `iasi.quarto` puede comprender.
+
+## Una herramienta para proyectos que crecen
+
+El valor de `iasi.quarto` aparece cuando la documentación deja de ser un conjunto de archivos aislados y empieza a comportarse como un sistema.
+
+En ese momento importan el orden, la consistencia, la repetibilidad y la capacidad de modificar la estructura sin reconstruir manualmente toda la configuración.
+
+`iasi.quarto` proporciona ese armazón sin quitarle a Quarto el papel central que le corresponde.

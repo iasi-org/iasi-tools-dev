@@ -1,0 +1,37 @@
+---
+title: "IASI Dev"
+subtitle: "Guía de usuario"
+---
+
+# Introducción
+
+`iasi-dev` es la herramienta de línea de comandos utilizada para realizar las operaciones habituales de desarrollo del proyecto IASI.
+
+Existe **por y para IASI**. Conoce sus proyectos, sus artefactos, sus convenciones y la forma en que se realizan operaciones como construcción, publicación, commit, release, sincronización y procesamiento de múltiples targets.
+
+A medida que IASI crece, también crece el número de tareas que deben ejecutarse de forma sistemática sobre sus distintos componentes. `iasi-dev` proporciona una interfaz común para realizar ese trabajo.
+
+```text
+iasi-dev command [flags] [parameters] [targets...]
+```
+
+```{r}
+#| label: tbl-sintaxis
+#| tbl-cap: "Elementos de una llamada a `iasi-dev`"
+
+syntax = data.frame(
+  Elemento = c("command", "flags", "parameters", "targets"),
+  Significado = c(
+    "Operación que se desea realizar.",
+    "Modificadores del comportamiento de la ejecución.",
+    "Valores asociados a opciones o necesidades concretas del comando.",
+    "Elementos de IASI sobre los que se aplica la operación."
+  )
+)
+
+knitr::kable(syntax, col.names = c("Elemento", "Significado"), align = c("l", "l"))
+```
+
+Una misma operación puede aplicarse a un único target, a varios targets seleccionados o a un conjunto resuelto a partir del contexto actual.
+
+Esta guía explica cómo utilizar `iasi-dev`: su modelo de comandos y targets, las operaciones disponibles, sus opciones, el procesamiento de múltiples proyectos, los resultados de ejecución, los logs y las herramientas de diagnóstico.

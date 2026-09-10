@@ -1,0 +1,42 @@
+# Salida y logs
+
+La consola y el log responden a necesidades distintas.
+
+```{r}
+#| label: tbl-salida-log
+#| tbl-cap: "Consola y log"
+
+outputs = data.frame(
+  Destino = c("Consola", "Log"),
+  Finalidad = c(
+    "Mostrar al usuario la información adecuada para seguir la ejecución.",
+    "Conservar el detalle necesario para revisar posteriormente lo ocurrido."
+  )
+)
+
+knitr::kable(outputs, col.names = c("Destino", "Finalidad"), align = c("l", "l"))
+```
+
+Cada ejecución dispone de un log.
+
+Cuando `iasi-dev` no necesita analizar la salida de una herramienta externa, sus flujos de salida pueden escribirse directamente en el log.
+
+Cuando necesita interpretar el resultado, puede capturar `stdout` y `stderr`, analizarlos y conservar igualmente la información producida.
+
+## Debug
+
+El modo debug permite seguir decisiones internas relevantes para el diagnóstico.
+
+```text
+target
+  ↓
+operación
+  ↓
+comando externo
+  ↓
+resultado
+  ↓
+decisión
+```
+
+El objetivo es que una ejecución pueda reconstruirse como una secuencia comprensible.

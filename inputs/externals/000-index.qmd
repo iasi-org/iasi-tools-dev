@@ -1,0 +1,59 @@
+---
+title: "IASI Dev: Inputs normativos"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Propósito
+
+Este directorio contiene los inputs normativos que definen la semántica prevista de `iasi-dev`.
+
+Estos documentos describen **qué debe significar el frontend y cómo deben comportarse sus comandos**. No son documentación generada ni una descripción accidental de la implementación actual.
+
+Los documentos se separan deliberadamente por responsabilidades para que IASI pueda derivar posteriormente `definitions/` sin tener que inferir fronteras desde una especificación monolítica.
+
+# Regla normativa
+
+Cuando la implementación y estos inputs aceptados discrepen, debe revisarse la implementación.
+
+IASI no debe completar silenciosamente decisiones que estén marcadas explícitamente como pendientes.
+
+Desde el punto de vista de IASI, el contenido de `inputs/externals/` es de solo lectura. Cualquier interpretación, normalización o derivación debe producir nuevos artefactos fuera de este directorio.
+
+# Documentos
+
+- `001-execution-model.qmd`: modelo general de ejecución y contrato común de fases.
+- `002-cli-and-context.qmd`: comandos, flags, argumentos posicionales, contexto de ejecución y selección de directorios.
+- `003-repositories-artifacts-and-iasi-yml.qmd`: modelo de repositorio, descubrimiento de artefactos y `_iasi.yml`.
+- `004-build.qmd`: semántica de build.
+- `005-publish.qmd`: semántica de publish.
+- `006-commit-release-deploy.qmd`: commit/push Git, promoción a release y orquestación de deploy.
+- `007-sync.qmd`: sincronización desde `iasi-common`.
+- `008-observability-errors-and-return-codes.qmd`: logs, verbosidad, tolerancia y códigos de retorno.
+- `009-open-decisions.qmd`: decisiones deliberadamente no cerradas.
+
+# Secuencia conceptual
+
+El flujo principal de desarrollo es:
+
+```text
+build
+publish
+release
+commit / deploy
+```
+
+Las fases son deliberadamente separables.
+
+Un ingeniero puede ejecutarlas una a una o pedir a un comando de nivel superior que orqueste el trabajo previo mediante `-f` (`full`).
+
+La operación explícita `release` constituye la frontera de aceptación:
+
+```text
+outputs/   = material de trabajo generado
+releases/  = material aceptado explícitamente para entrega
+```
+
+Construir, publicar o hacer commit no implica por sí mismo que el material generado haya sido aceptado como release.

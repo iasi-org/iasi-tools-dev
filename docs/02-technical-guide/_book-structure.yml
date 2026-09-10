@@ -1,0 +1,7 @@
+book:
+  chapters:
+    - "index.qmd"
+    - "chapters/01-intro/index.qmd"
+    - "chapters/02-fundamentals/index.qmd"
+    - "chapters/03-installation/index.qmd"
+    - "chapters/04-plantuml/index.qmd"

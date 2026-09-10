@@ -1,0 +1,453 @@
+## Verificar la instalación
+
+La instalación queda verificada cuando R puede cargar `iasi.quarto`, localizar Quarto y reconocer una publicación válida.
+
+La comprobación puede realizarse en cuatro pasos:
+
+```text
+comprobar el paquete
+comprobar Quarto
+validar una publicación
+construir un formato
+```
+
+## Comprobar el paquete
+
+Cargue el paquete:
+
+```r
+library(iasi.quarto)
+```
+
+La operación debe terminar sin errores.
+
+Después, consulte la versión instalada:
+
+```r
+packageVersion("iasi.quarto")
+```
+
+Para la versión `0.5.0`, el resultado será equivalente a:
+
+```text
+[1] '0.5.0'
+```
+
+También puede comprobarse la ruta desde la que R ha cargado el paquete:
+
+```r
+find.package("iasi.quarto")
+```
+
+Esto resulta útil cuando existen varias bibliotecas de R o varias instalaciones del mismo paquete.
+
+## Comprobar Quarto
+
+`iasi.quarto` necesita que el ejecutable de Quarto esté disponible para la sesión de R.
+
+Compruébelo con:
+
+```r
+Sys.which("quarto")
+```
+
+El resultado debe contener una ruta.
+
+Por ejemplo:
+
+```text
+quarto
+"C:\Program Files\Quarto\bin\quarto.exe"
+```
+
+Si el resultado es una cadena vacía:
+
+```text
+quarto
+""
+```
+
+R no puede localizar Quarto mediante la variable `PATH`.
+
+También puede comprobarse la versión desde R:
+
+```r
+system2(
+  "quarto",
+  "--version"
+)
+```
+
+Y desde una terminal:
+
+```bash
+quarto --version
+```
+
+## Situarse en una publicación
+
+Para verificar `validate()`, la sesión debe trabajar sobre una publicación IASI Quarto o sobre un multiproyecto que contenga publicaciones completas.
+
+Una publicación mínima contiene:
+
+```text
+publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+Desde R puede comprobarse el directorio actual con:
+
+```r
+getwd()
+```
+
+Cuando la publicación se encuentra en otra ruta:
+
+```r
+setwd(
+  "path/to/publication"
+)
+```
+
+También puede evitarse el cambio de directorio pasando la ruta explícitamente:
+
+```r
+plan = validate(
+  "path/to/publication"
+)
+```
+
+## Validar la publicación
+
+Ejecute:
+
+```r
+plan = validate()
+```
+
+Si el directorio actual contiene una publicación o multiproyecto IASI Quarto, `validate()` devuelve invisiblemente un plan.
+
+Puede comprobarse con:
+
+```r
+is.null(plan)
+```
+
+El resultado esperado es:
+
+```text
+FALSE
+```
+
+Y su clase:
+
+```r
+class(plan)
+```
+
+debe incluir:
+
+```text
+"iasi_quarto_plan"
+```
+
+También pueden inspeccionarse sus propiedades iniciales:
+
+```r
+plan$path
+plan$current
+plan$books
+```
+
+### Publicación actual
+
+Cuando la ruta validada contiene la firma completa:
+
+```r
+plan$current
+```
+
+debe devolver:
+
+```text
+TRUE
+```
+
+### Multiproyecto
+
+Cuando la ruta actúa como contenedor de varias publicaciones:
+
+```r
+plan$current
+```
+
+debe devolver:
+
+```text
+FALSE
+```
+
+Las publicaciones candidatas quedan registradas en:
+
+```r
+plan$books
+```
+
+## Directorio no reconocido
+
+Si la ruta no contiene una publicación ni un multiproyecto IASI Quarto:
+
+```r
+plan = validate(
+  "path/to/ordinary-directory"
+)
+```
+
+el resultado es:
+
+```r
+NULL
+```
+
+Esto no indica un fallo de instalación.
+
+Indica que la ruta no cumple la firma de publicación esperada.
+
+La diferencia es importante:
+
+```text
+library(iasi.quarto) falla
+  problema de instalación del paquete
+
+Sys.which("quarto") devuelve ""
+  Quarto no está disponible para R
+
+validate() devuelve NULL
+  la ruta no es un espacio IASI Quarto
+```
+
+## Construir HTML
+
+La comprobación funcional mínima consiste en construir HTML:
+
+```r
+build(
+  format = "html"
+)
+```
+
+HTML es la primera prueba recomendada porque no depende de una distribución de TeX.
+
+La construcción completa recorre:
+
+```text
+validate()
+.discover()
+.check()
+.prepare()
+.render()
+```
+
+Si termina correctamente, quedan verificados:
+
+```text
+la carga del paquete
+la lectura de la configuración
+la estructura de la publicación
+la generación de artefactos
+la invocación de Quarto
+```
+
+## Inspeccionar el resultado
+
+`build()` devuelve invisiblemente el plan completado.
+
+Puede conservarse:
+
+```r
+plan = build(
+  format = "html"
+)
+```
+
+Después pueden inspeccionarse:
+
+```r
+plan$formats
+plan$rendered
+plan$elapsed
+```
+
+El formato esperado es:
+
+```r
+plan$formats
+```
+
+```text
+"html"
+```
+
+Y, después de un renderizado correcto:
+
+```r
+plan$rendered
+```
+
+debe ser:
+
+```text
+TRUE
+```
+
+Cada proyecto contiene también su publicación preparada:
+
+```r
+publication = plan$projects[[1]]$publication
+```
+
+Pueden consultarse:
+
+```r
+publication$chapters
+publication$artifacts
+publication$changed
+publication$rendered
+publication$profiles
+```
+
+## Construir PDF
+
+Una vez verificado HTML, puede comprobarse PDF:
+
+```r
+build(
+  format = "pdf"
+)
+```
+
+Esta prueba añade la dependencia de TeX.
+
+Si HTML funciona y PDF falla, el paquete y la estructura básica ya han superado la verificación principal.
+
+En ese caso, debe revisarse:
+
+```text
+la instalación de TeX
+la integración de TeX con Quarto
+las dependencias LaTeX de la publicación
+```
+
+La comprobación general puede realizarse desde una terminal:
+
+```bash
+quarto check
+```
+
+## Verificación completa
+
+La secuencia completa es:
+
+```r
+library(iasi.quarto)
+
+packageVersion("iasi.quarto")
+
+Sys.which("quarto")
+
+plan = validate()
+
+stopifnot(
+  !is.null(plan)
+)
+
+html = build(
+  format = "html"
+)
+
+stopifnot(
+  isTRUE(html$rendered)
+)
+```
+
+Después, cuando el entorno PDF esté preparado:
+
+```r
+pdf = build(
+  format = "pdf"
+)
+
+stopifnot(
+  isTRUE(pdf$rendered)
+)
+```
+
+## Diagnóstico rápido
+
+Los fallos más habituales pueden localizarse por la etapa en la que aparecen.
+
+| Comprobación | Resultado | Interpretación |
+|---|---|---|
+| `library(iasi.quarto)` | error | El paquete no está instalado o no está disponible en `.libPaths()` |
+| `Sys.which("quarto")` | `""` | R no puede localizar Quarto |
+| `validate()` | `NULL` | La ruta no contiene una publicación IASI Quarto |
+| `build(format = "html")` | error antes de Quarto | La configuración o estructura no supera el pipeline |
+| `build(format = "html")` | error de Quarto | Quarto no pudo renderizar la publicación |
+| `build(format = "pdf")` | falla con HTML correcto | Debe revisarse el entorno TeX |
+
+```{.plantuml}
+@startuml
+top to bottom direction
+
+start
+
+:library(iasi.quarto);
+
+if (¿Carga correctamente?) then (sí)
+  :Sys.which("quarto");
+else (no)
+  :Revisar instalación y .libPaths();
+  stop
+endif
+
+if (¿Quarto tiene ruta?) then (sí)
+  :validate();
+else (no)
+  :Revisar PATH e instalación de Quarto;
+  stop
+endif
+
+if (¿Se obtiene un plan?) then (sí)
+  :build(format = "html");
+else (no)
+  :Revisar firma y ruta de la publicación;
+  stop
+endif
+
+if (¿HTML se genera?) then (sí)
+  :Instalación verificada;
+else (no)
+  :Revisar el error del pipeline o de Quarto;
+endif
+
+stop
+@enduml
+```
+
+## Resultado esperado
+
+La instalación puede considerarse correcta cuando:
+
+```text
+R carga iasi.quarto
+Quarto está disponible
+validate() reconoce la publicación
+build(format = "html") termina correctamente
+```
+
+PDF puede verificarse después como una capacidad adicional del entorno.
+
+> La instalación no termina al copiar el paquete. Termina cuando una publicación real atraviesa el pipeline y llega a Quarto.

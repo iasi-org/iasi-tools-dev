@@ -1,0 +1,341 @@
+## Servidor PlantUML
+
+La extensión necesita un servidor PlantUML accesible mediante HTTP.
+
+El servidor recibe la fuente preparada por la extensión y devuelve la imagen del diagrama.
+
+```text
+extensión Lua
+  -> petición HTTP
+  -> servidor PlantUML
+  -> imagen PNG
+```
+
+El servidor no tiene que ejecutarse dentro del proyecto Quarto ni dentro del proceso de R.
+
+Puede estar:
+
+```text
+en el mismo equipo
+en otra máquina de la red
+en una infraestructura compartida
+en un servicio público
+```
+
+La elección depende del entorno, pero esta guía recomienda utilizar un servidor controlado por el usuario o por el equipo.
+
+## Alternativas
+
+### Servidor público
+
+Un servidor público permite comenzar sin instalar infraestructura propia.
+
+```text
+ventajas
+  puesta en marcha inmediata
+  ninguna administración local
+
+inconvenientes
+  dependencia de Internet
+  disponibilidad fuera del control del proyecto
+  envío de la fuente del diagrama a un tercero
+```
+
+Puede resultar útil para una prueba rápida.
+
+No es la opción recomendada para documentación interna, diagramas sensibles o construcciones que deban ser reproducibles dentro de un entorno controlado.
+
+### Servidor local
+
+Un servidor local se ejecuta en el mismo equipo desde el que se construye la publicación.
+
+```text
+publicación
+  -> http://localhost:1025
+  -> PlantUML
+```
+
+Sus principales ventajas son:
+
+```text
+no depende de un servicio público
+mantiene la fuente dentro del equipo
+puede funcionar sin acceso a Internet
+es sencillo de iniciar y detener
+```
+
+Es la opción recomendada para desarrollo individual.
+
+### Servidor compartido
+
+Un equipo puede mantener una única instancia accesible dentro de su red.
+
+```text
+equipo A ─┐
+equipo B ─┼─> servidor PlantUML interno
+CI/CD   ──┘
+```
+
+Esto permite compartir:
+
+```text
+la misma versión del motor
+una dirección común
+una política de actualización
+un servicio disponible para integración continua
+```
+
+Es la opción recomendada cuando varias personas o procesos construyen las mismas publicaciones.
+
+## Instalación recomendada con Docker
+
+La instalación de referencia utiliza la imagen oficial de PlantUML Server y publica su puerto interno `8080` como puerto `1025` del equipo anfitrión.
+
+```bash
+docker run -d \
+  --name plantuml-server \
+  --restart unless-stopped \
+  -p 1025:8080 \
+  plantuml/plantuml-server:jetty
+```
+
+En PowerShell puede escribirse en una sola línea:
+
+```powershell
+docker run -d --name plantuml-server --restart unless-stopped -p 1025:8080 plantuml/plantuml-server:jetty
+```
+
+La correspondencia de puertos es:
+
+```text
+equipo anfitrión : 1025
+contenedor       : 8080
+```
+
+La extensión utilizará:
+
+```text
+http://localhost:1025
+```
+
+El puerto `1025` es una convención de esta instalación, no una exigencia de PlantUML ni de `iasi.quarto`.
+
+Puede sustituirse por otro puerto libre.
+
+## Instalación con Docker Compose
+
+La misma instalación puede declararse mediante `compose.yml`:
+
+```yaml
+services:
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    container_name: plantuml-server
+    restart: unless-stopped
+    ports:
+      - "1025:8080"
+```
+
+Para iniciarla:
+
+```bash
+docker compose up -d
+```
+
+Para comprobar su estado:
+
+```bash
+docker compose ps
+```
+
+Para detenerla:
+
+```bash
+docker compose down
+```
+
+La declaración Compose resulta especialmente útil cuando el servidor forma parte de un entorno de desarrollo reproducible.
+
+## Comprobar el servidor
+
+Después de iniciar el contenedor, puede abrirse en un navegador:
+
+```text
+http://localhost:1025
+```
+
+También puede comprobarse desde una terminal:
+
+```bash
+curl http://localhost:1025
+```
+
+La respuesta debe proceder del servidor PlantUML.
+
+El contenedor puede inspeccionarse con:
+
+```bash
+docker ps --filter name=plantuml-server
+```
+
+Y sus mensajes con:
+
+```bash
+docker logs plantuml-server
+```
+
+## Utilizarlo desde otra máquina
+
+Cuando Quarto se ejecuta en otro equipo, `localhost` ya no representa la máquina que aloja PlantUML.
+
+Debe utilizarse su nombre o dirección de red:
+
+```text
+http://<host>:1025
+```
+
+Por ejemplo:
+
+```yaml
+filter-options:
+  plantuml:
+    server: http://plantuml.local:1025
+```
+
+La máquina cliente debe poder resolver el nombre y acceder al puerto publicado.
+
+La comprobación debe realizarse desde el mismo entorno que ejecutará Quarto:
+
+```bash
+curl http://plantuml.local:1025
+```
+
+Que el servidor funcione en su propia máquina no garantiza que sea accesible desde otro equipo, una máquina virtual o un contenedor.
+
+## Configuración local recomendada
+
+Para una publicación construida en el mismo equipo:
+
+```yaml
+filter-options:
+  plantuml:
+    enabled: true
+    server: http://localhost:1025
+    format: png
+    cache: true
+    styles:
+      - resources/plantuml/iasi.puml
+```
+
+Esta configuración combina:
+
+```text
+servidor local controlado
+salida PNG
+caché activada
+estilo compartido
+```
+
+Es el punto de partida recomendado en esta guía.
+
+## Configuración para un equipo
+
+Cuando el servidor es compartido, solo cambia su dirección:
+
+```yaml
+filter-options:
+  plantuml:
+    enabled: true
+    server: http://plantuml.local:1025
+    format: png
+    cache: true
+    styles:
+      - resources/plantuml/iasi.puml
+```
+
+La publicación no necesita conocer cómo se ejecuta internamente el servidor.
+
+Solo necesita una URL compatible y accesible.
+
+Esto permite cambiar su despliegue sin modificar los bloques PlantUML de los documentos.
+
+## Actualizar el servidor
+
+Cuando se utiliza la etiqueta `jetty`, Docker puede obtener una versión más reciente de la imagen:
+
+```bash
+docker pull plantuml/plantuml-server:jetty
+```
+
+Después debe recrearse el contenedor.
+
+Con Docker Compose:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Para construcciones que necesiten reproducibilidad estricta, el equipo debe fijar una etiqueta concreta o un digest de imagen en lugar de depender de una etiqueta móvil.
+
+La actualización del servidor puede cambiar el resultado gráfico de un diagrama aunque su fuente no haya cambiado.
+
+Por eso debe tratarse como una actualización de infraestructura y comprobarse antes de adoptarla en una publicación estable.
+
+## Seguridad y privacidad
+
+La fuente del diagrama se envía al servidor configurado.
+
+Por tanto:
+
+```text
+un servidor público recibe el contenido del diagrama
+un servidor local lo mantiene en el equipo
+un servidor interno lo mantiene dentro de la red controlada
+```
+
+Los diagramas pueden contener nombres de sistemas, relaciones, componentes o flujos internos.
+
+La dirección del servidor no debe elegirse únicamente por comodidad.
+
+Tampoco se recomienda publicar directamente en Internet una instancia propia sin revisar su exposición, configuración y política de seguridad.
+
+Para uso individual, enlazarla únicamente al entorno necesario reduce la superficie accesible.
+
+Para uso compartido, el servidor debe incorporarse a las medidas normales de red, actualización y control de acceso del equipo.
+
+## Disponibilidad y caché
+
+El servidor es necesario cuando la extensión debe compilar un diagrama nuevo.
+
+```text
+diagrama nuevo o modificado
+  -> necesita servidor
+
+diagrama presente en caché
+  -> puede reutilizar la imagen
+```
+
+La caché mejora el rendimiento y reduce la dependencia durante construcciones repetidas, pero no debe confundirse con una garantía de disponibilidad permanente.
+
+Una construcción limpia necesita poder acceder al servidor para regenerar todos los diagramas.
+
+## La instalación de referencia
+
+La recomendación de esta guía puede resumirse así:
+
+```text
+PlantUML Server oficial
+ejecutado en Docker
+puerto del anfitrión 1025
+acceso local o mediante red interna
+salida PNG
+caché activada
+estilos compartidos
+```
+
+No es la única instalación posible.
+
+Es una configuración pequeña, comprensible y suficiente para desarrollar publicaciones, compartir el servicio dentro de un equipo y trasladarlo posteriormente a una infraestructura más estable.
+
+> El contrato de la extensión es una URL PlantUML accesible. Docker y el puerto `1025` son la implementación de referencia.

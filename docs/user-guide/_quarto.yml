@@ -1,0 +1,83 @@
+project:
+  type: website
+
+profile:
+  default: html
+  group:
+    - [html]
+
+lang: es
+
+website:
+  title: "IASI Dev User Guide"
+  page-navigation: true
+  sidebar:
+    style: docked
+    search: true
+    contents:
+      - href: index.qmd
+        text: Inicio
+      - section: "Primeros pasos"
+        contents:
+          - pages/01-primeros-pasos/00-que-es.qmd
+          - pages/01-primeros-pasos/01-donde-ejecutarlo.qmd
+          - pages/01-primeros-pasos/02-primer-uso.qmd
+      - section: "Modelo de trabajo"
+        contents:
+          - pages/02-modelo-de-trabajo/00-repositorios.qmd
+          - pages/02-modelo-de-trabajo/01-generar-aceptar.qmd
+          - pages/02-modelo-de-trabajo/02-paso-a-paso-o-full.qmd
+      - section: "Build"
+        contents:
+          - pages/03-build/00-build.qmd
+          - pages/03-build/01-quarto.qmd
+          - pages/03-build/02-r-packages.qmd
+      - section: "Publish"
+        contents:
+          - pages/04-publish/00-publish.qmd
+          - pages/04-publish/01-publish-full.qmd
+      - section: "Release"
+        contents:
+          - pages/05-release/00-release.qmd
+          - pages/05-release/01-release-full.qmd
+          - pages/05-release/02-estado-actual.qmd
+      - section: "Commit y deploy"
+        contents:
+          - pages/06-commit-y-deploy/00-commit.qmd
+          - pages/06-commit-y-deploy/01-commit-full.qmd
+          - pages/06-commit-y-deploy/02-deploy.qmd
+          - pages/06-commit-y-deploy/03-deploy-full.qmd
+      - section: "Sync"
+        contents:
+          - pages/07-sync/00-sync.qmd
+          - pages/07-sync/01-resolucion.qmd
+          - pages/07-sync/02-copias-existentes.qmd
+      - section: "Control de ejecución"
+        contents:
+          - pages/08-control-de-ejecucion/00-verbosidad.qmd
+          - pages/08-control-de-ejecucion/01-tolerant.qmd
+          - pages/08-control-de-ejecucion/02-logs.qmd
+          - pages/08-control-de-ejecucion/03-opciones.qmd
+      - section: "Workflows"
+        contents:
+          - pages/09-workflows/00-trabajo-diario.qmd
+          - pages/09-workflows/01-publicar-y-revisar.qmd
+          - pages/09-workflows/02-release-selectiva.qmd
+          - pages/09-workflows/03-todo-en-uno.qmd
+      - section: "Diagnóstico y Tips & Tricks"
+        contents:
+          - pages/10-troubleshooting-y-tips/00-repo-no-aparece.qmd
+          - pages/10-troubleshooting-y-tips/01-artefacto-ignorado.qmd
+          - pages/10-troubleshooting-y-tips/02-fallo-build-publish.qmd
+          - pages/10-troubleshooting-y-tips/03-sync-no-encuentra.qmd
+          - pages/10-troubleshooting-y-tips/04-tips.qmd
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+
+execute:
+  freeze: auto

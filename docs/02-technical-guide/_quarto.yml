@@ -1,0 +1,33 @@
+project:
+  type: book
+
+metadata-files:
+  - _book-structure.yml
+
+book:
+  title: "IASI Quarto Technical Guide"
+  subtitle: "Framework for Engineering Documentation with Quarto"
+  author: "IASI Project"
+
+format:
+  html:
+    toc: true
+    number-sections: true
+
+  pdf:
+    documentclass: scrreprt
+    toc: true
+    number-sections: true
+
+execute:
+  freeze: auto
+  
+filters:
+  - iasi-plantuml
+  
+filter-options:
+  plantuml:
+    enabled: true
+    server: http://localhost:10025
+    format: png
+    cache: true

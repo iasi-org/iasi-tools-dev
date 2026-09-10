@@ -1,0 +1,15 @@
+{
+  "hash": "f02a420d1392ab2f33183225734ab9da",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Targets\n\nLos targets son los elementos sobre los que se aplica una operación de `iasi-dev`.\n\n## Targets explícitos\n\n```text\niasi-dev build iasi-book-I\n```\n\n```text\niasi-dev build iasi-book-I iasi-book-II\n```\n\n## El target `.`\n\n`.` se interpreta según las reglas de resolución de IASI. No se trata simplemente como una cadena literal.\n\n## Sin targets explícitos\n\nPara los comandos que lo permiten, la ausencia de targets hace que `iasi-dev` determine los elementos aplicables desde el contexto actual.\n\n## Exclusiones\n\nDeterminadas ubicaciones, como áreas de pruebas, pueden quedar fuera del procesamiento normal.\n\n## Targets solicitados y targets efectivos\n\n\n::: {#tbl-targets .cell tbl-cap='Dos vistas de los targets'}\n::: {.cell-output-display}\n\n\n|Vista            |Contenido                                                                    |\n|:----------------|:----------------------------------------------------------------------------|\n|RequestedTargets |Lo que el usuario indicó explícitamente en la línea de comandos.             |\n|Targets          |Los targets resultantes después de aplicar las reglas de resolución de IASI. |\n\n\n:::\n:::\n\n\nEsta diferencia resulta especialmente importante en comandos como `sync`.\n\n## `sync` requiere una petición explícita\n\n```text\niasi-dev sync .gitattributes\n```\n\n`sync` no debe inferir automáticamente qué elemento desea sincronizar el usuario. Ejecutarlo sin ningún elemento explícito es un error.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,120 @@
+---
+title: "IASI Dev: Repositorios, artefactos y marcadores IASI"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Repositorio IASI
+
+Un directorio candidato es un repositorio IASI cuando su raíz contiene:
+
+```text
+_iasi.yml
+```
+
+o:
+
+```text
+.iasi.yml
+```
+
+El marcador de raíz identifica el repositorio como repositorio IASI.
+
+No identifica un artefacto.
+
+Para el procesamiento orientado a repositorios, Git es actualmente el sistema de control de versiones requerido y la raíz del repositorio debe contener `.git`.
+
+La comprobación Git es independiente de la comprobación del marcador IASI.
+
+# Descubrimiento de artefactos
+
+Los artefactos se descubren recursivamente por debajo de la raíz del repositorio.
+
+Un directorio anidado que contiene:
+
+```text
+_iasi.yml
+```
+
+o:
+
+```text
+.iasi.yml
+```
+
+declara un artefacto.
+
+El marcador situado en la raíz del repositorio debe excluirse del descubrimiento de artefactos.
+
+Los directorios `tests` no deben recorrerse nunca.
+
+El descubrimiento devuelve directorios de artefacto, no rutas a ficheros YAML.
+
+# Tipo de artefacto explícito
+
+El tipo de artefacto debe declararse explícitamente.
+
+IASI no debe deducir el tipo buscando ficheros específicos de una tecnología como:
+
+```text
+DESCRIPTION
+_quarto.yml
+pom.xml
+```
+
+Estos ficheros podrán utilizarse posteriormente para validar, pero no sustituyen la declaración explícita de intención.
+
+Ejemplos mínimos:
+
+```yaml
+type: r-package
+```
+
+```yaml
+type: quarto
+```
+
+Un book publicable puede declarar:
+
+```yaml
+type: book
+```
+
+# Procesamiento único del marcador
+
+El marcador del artefacto debe leerse y procesarse una sola vez en la frontera del artefacto.
+
+La configuración ya procesada debe pasarse después a las funciones hijas junto con el artefacto y el contexto de ejecución heredado.
+
+Conceptualmente:
+
+```go
+buildQuarto(artifact, arguments, iasi)
+buildPackage(artifact, arguments, iasi)
+```
+
+El artefacto es el primer parámetro porque es el objeto sobre el que se trabaja.
+
+# Tipo ausente o no soportado
+
+`type` puede no existir.
+
+Un `type` ausente, vacío o no soportado debe generar un aviso y el artefacto debe ignorarse para esa operación.
+
+Esto no constituye por sí mismo un fallo del repositorio.
+
+# Marcador inválido
+
+Un marcador que no pueda leerse o parsearse no debe tratarse silenciosamente como un artefacto válido.
+
+El comportamiento previsto actualmente es avisar e ignorarlo, salvo que una futura fase explícita de validación defina una política más estricta.
+
+# Contexto estructural
+
+El marcador de raíz describe el repositorio.
+
+Los marcadores anidados describen artefactos.
+
+No debe añadirse metadato redundante únicamente para repetir información que ya determina la estructura.

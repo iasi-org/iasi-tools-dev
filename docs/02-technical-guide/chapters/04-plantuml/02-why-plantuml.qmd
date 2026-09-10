@@ -1,0 +1,298 @@
+### ¿Por qué PlantUML?
+
+Quarto admite distintas formas de incorporar diagramas en una publicación.
+
+Mermaid es una alternativa especialmente cómoda para diagramas sencillos. Puede escribirse directamente dentro del documento y encaja bien cuando el objetivo principal es representar rápidamente un flujo, una secuencia o una relación entre elementos.
+
+PlantUML introduce una decisión diferente.
+
+En esta plataforma, el diagrama no se trata únicamente como una ilustración embebida en Markdown. Se trata como una fuente que atraviesa un compilador especializado antes de incorporarse al documento final.
+
+```text
+fuente PlantUML
+  -> estilos compartidos
+  -> extensión Lua
+  -> servidor PlantUML
+  -> imagen
+  -> caché
+  -> HTML o PDF
+```
+
+La elección no nace de una oposición entre herramientas.
+
+Mermaid y PlantUML resuelven problemas parcialmente coincidentes, pero encajan de forma distinta en una arquitectura documental.
+
+#### Mermaid como opción válida
+
+Mermaid resulta apropiado cuando se busca:
+
+```text
+escribir diagramas con poca infraestructura
+mantener todo dentro del documento
+crear representaciones rápidas
+aprovechar una integración directa con Quarto
+evitar un servidor externo
+```
+
+Para muchos proyectos, estas propiedades son suficientes.
+
+Un diagrama sencillo puede escribirse cerca del texto al que pertenece y renderizarse como parte natural del documento.
+
+La ventaja principal es la inmediatez.
+
+```text
+fuente Mermaid
+  -> Quarto
+  -> representación final
+```
+
+Este camino reduce componentes y simplifica la puesta en marcha.
+
+#### Lo que necesita la plataforma
+
+La plataforma persigue algo más amplio que insertar diagramas ocasionales.
+
+Necesita que los diagramas puedan formar parte de una infraestructura común:
+
+```text
+estilos reutilizables
+servidor controlado
+salida gráfica predecible
+caché independiente
+integración con HTML y PDF
+arquitectura extensible
+```
+
+También necesita separar claramente:
+
+```text
+la fuente del diagrama
+la configuración del compilador
+el servicio de renderizado
+la imagen generada
+la publicación final
+```
+
+PlantUML encaja mejor con esa separación.
+
+#### Un lenguaje orientado a documentación técnica
+
+PlantUML ofrece una familia amplia de diagramas útiles para documentación de sistemas.
+
+Entre otros, permite representar:
+
+```text
+secuencias
+componentes
+despliegues
+clases
+casos de uso
+estados
+actividades
+objetos
+arquitecturas
+```
+
+La importancia no está únicamente en la cantidad de tipos disponibles.
+
+La misma herramienta puede acompañar diferentes niveles de documentación:
+
+```text
+visión general del sistema
+interacción entre servicios
+estructura lógica
+despliegue físico
+flujo de una operación
+modelo de dominio
+```
+
+Esto reduce la necesidad de introducir una tecnología diferente para cada clase de diagrama.
+
+### Estilos compartidos
+
+Una de las razones principales de la elección es la posibilidad de centralizar la presentación mediante archivos `.puml`.
+
+Por ejemplo:
+
+```text
+resources/plantuml/iasi.puml
+```
+
+Ese archivo puede contener reglas comunes para toda la publicación:
+
+```text
+colores
+tipografía
+bordes
+espaciado
+apariencia de componentes
+convenciones visuales
+```
+
+El documento describe el significado del diagrama.
+
+El recurso compartido define su apariencia.
+
+```text
+documento
+  -> estructura y relaciones
+
+iasi.puml
+  -> lenguaje visual común
+```
+
+Esta separación evita copiar configuraciones visuales dentro de cada bloque.
+
+También permite modificar la identidad gráfica de numerosos diagramas desde un único lugar.
+
+### Servidor independiente
+
+PlantUML puede ejecutarse mediante un servidor separado del proceso de Quarto.
+
+La extensión envía la fuente preparada y recibe una imagen.
+
+```text
+extensión
+  -> petición HTTP
+  -> servidor PlantUML
+  -> imagen
+```
+
+Esta separación aporta varias posibilidades:
+
+```text
+servidor local para una persona
+servidor compartido para un equipo
+contenedor dedicado
+servicio interno dentro de una red
+```
+
+El motor de diagramación no queda acoplado al navegador ni al formato final del documento.
+
+Puede evolucionar, actualizarse o desplegarse de forma independiente.
+
+### Una imagen común para HTML y PDF
+
+La configuración recomendada genera PNG.
+
+```text
+PlantUML -> PNG -> HTML
+PlantUML -> PNG -> PDF
+```
+
+Quarto recibe el mismo tipo de recurso para ambos formatos.
+
+Esto evita depender de una representación distinta según el destino y reduce conversiones adicionales durante la construcción del PDF.
+
+La decisión no significa que PNG sea siempre superior a SVG.
+
+Significa que, para este pipeline concreto, una salida común y predecible simplifica el comportamiento general.
+
+### Caché antes del renderizado
+
+La extensión puede calcular una identidad para cada diagrama a partir de:
+
+```text
+fuente preparada
+servidor
+formato
+versión de la extensión
+```
+
+Cuando esa identidad ya existe en la caché, no es necesario volver a solicitar la imagen al servidor.
+
+```text
+diagrama sin cambios
+  -> reutilizar imagen
+
+diagrama modificado
+  -> compilar de nuevo
+```
+
+La caché pertenece a la infraestructura de la extensión, no al documento final.
+
+Esta posición dentro del pipeline permite reutilizar diagramas antes de que Quarto procese HTML o PDF.
+
+### Integración con la arquitectura de extensiones
+
+PlantUML es también el primer ejemplo completo del framework de extensiones de la plataforma.
+
+La integración separa:
+
+```text
+núcleo común
+configuración
+caché
+sistema de archivos
+mediabag
+compilador específico
+```
+
+PlantUML aporta el compilador concreto.
+
+El núcleo aporta el ciclo general.
+
+```text
+bloque de código
+  -> configuración
+  -> preparación
+  -> identidad
+  -> caché
+  -> compilación
+  -> recurso para Pandoc
+```
+
+Esta arquitectura permite que futuras extensiones sigan el mismo modelo sin copiar toda la infraestructura.
+
+PlantUML no es únicamente una herramienta de diagramación dentro del proyecto.
+
+Es el primer ciudadano de una familia de compiladores documentales.
+
+### Comparación resumida
+
+| Aspecto | Mermaid | PlantUML en esta plataforma |
+|---|---|---|
+| Puesta en marcha | Muy directa | Requiere extensión y servidor |
+| Infraestructura | Mínima | Explícita y configurable |
+| Fuente en el documento | Sí | Sí |
+| Estilos compartidos | Posibles, pero no son el centro del diseño adoptado | Archivo `.puml` común |
+| Servidor propio | No es necesario | Recomendado |
+| Caché de la extensión | No forma parte de este diseño | Integrada antes de Quarto |
+| Salida común HTML/PDF | Depende del procesamiento del documento | PNG generado previamente |
+| Encaje con el framework Lua | No es la integración elegida | Compilador especializado |
+| Uso recomendado | Diagramas rápidos y ligeros | Infraestructura documental técnica |
+
+La tabla no pretende establecer un vencedor universal.
+
+Describe la razón por la que esta plataforma adopta PlantUML como opción principal.
+
+### Criterio de elección
+
+La decisión puede resumirse así:
+
+```text
+si el objetivo es dibujar rápidamente dentro del documento
+  Mermaid puede ser suficiente
+
+si el objetivo es integrar los diagramas en una infraestructura común
+  PlantUML encaja mejor con esta plataforma
+```
+
+La elección se apoya en cuatro necesidades:
+
+```text
+control
+reutilización
+reproducibilidad
+extensibilidad
+```
+
+Control sobre el servicio y el formato generado.
+
+Reutilización de estilos y convenciones visuales.
+
+Reproducibilidad de la construcción mediante fuente, caché y compilador.
+
+Extensibilidad mediante una arquitectura que puede incorporar otros motores.
+
+> No elegimos PlantUML porque Mermaid no sirva. Lo elegimos porque aquí el diagrama es una pieza del pipeline de ingeniería documental.

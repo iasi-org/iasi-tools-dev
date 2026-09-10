@@ -1,0 +1,116 @@
+---
+title: "IASI Dev: Build"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Contrato
+
+```go
+func runBuild(arguments Arguments, repositories []string) []string
+```
+
+`runBuild` recibe repositorios y devuelve únicamente los repositorios cuya fase de build ha terminado correctamente.
+
+La lista devuelta conserva el orden de entrada.
+
+# Flujo por repositorio
+
+Para cada repositorio IASI Git seleccionado:
+
+1. anunciar el build del repositorio;
+2. descubrir recursivamente sus artefactos IASI anidados;
+3. procesar cada artefacto mediante `buildArtifact`;
+4. añadir el repositorio a la lista devuelta solo después de que todo el trabajo de build aplicable haya terminado correctamente.
+
+Con `-t`, un repositorio en el que falle cualquier operación de build se excluye de la lista devuelta y se continúa.
+
+Sin `-t`, build termina inmediatamente con `RC.Build`.
+
+# Dispatch de artefactos
+
+`buildArtifact` debe:
+
+1. leer el marcador IASI del artefacto;
+2. consultar el `type` explícito;
+3. despachar al builder correspondiente;
+4. pasar `artifact`, `arguments` heredados y la configuración IASI ya procesada.
+
+El switch debe permanecer directo y legible.
+
+Conceptualmente:
+
+```go
+switch iasi.Type {
+case "r-package": buildPackage(artifact, arguments, iasi)
+case "quarto": buildQuarto(artifact, arguments, iasi)
+default: warning and ignore
+}
+```
+
+# Build Quarto
+
+Para `type: quarto`:
+
+1. ejecutar desde el directorio del artefacto;
+2. construir una expresión R que llame a `iasi.quarto::build(...)`;
+3. ejecutarla mediante `Rscript`;
+4. enviar la salida del comando al log común de ejecución.
+
+`--format` se mapea al argumento `format`.
+
+Cuando `Full` está activo, se mapea a:
+
+```r
+force = TRUE
+```
+
+Ejemplos:
+
+```r
+iasi.quarto::build()
+iasi.quarto::build(force = TRUE)
+iasi.quarto::build(format = "html")
+iasi.quarto::build(format = "html", force = TRUE)
+```
+
+El frontend no debe reproducir lógica específica de Quarto que pertenezca a `iasi.quarto`.
+
+# Build de R package
+
+Para `type: r-package`, build debe generar:
+
+1. el paquete fuente;
+2. el paquete binario.
+
+Build no debe instalar persistentemente el paquete simplemente porque sea necesario generar un binario.
+
+Si R necesita internamente una forma instalada para producir el binario, puede utilizarse una librería temporal que se elimine después.
+
+La instalación persistente solo se realiza cuando el usuario solicita explícitamente:
+
+```text
+-i
+```
+
+# Instalación
+
+`-i` añade la instalación después de una construcción correcta.
+
+Conceptualmente:
+
+```text
+build source
+→ build binary
+→ if -i: install package
+```
+
+La instalación no define el build.
+
+# Full
+
+`build -f` no invoca otra fase IASI porque build es la primera fase de generación.
+
+Para builders que soporten forzar su propio trabajo, `Full` puede mapearse a la opción específica de force de esa tecnología.

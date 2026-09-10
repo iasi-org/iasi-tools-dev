@@ -1,0 +1,15 @@
+{
+  "hash": "8905659b810b2bfc4dde312a3655516f",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Primeros pasos\n\n## Mostrar la ayuda\n\n```text\niasi-dev help\n```\n\nSi se ejecuta `iasi-dev` sin indicar un comando, se muestra igualmente la ayuda.\n\n## Trabajar con un target\n\n```text\niasi-dev build iasi-book-I\n```\n\n## Trabajar con varios targets\n\n```text\niasi-dev build iasi-book-I iasi-book-II\n```\n\n## Trabajar desde el contexto actual\n\n```text\niasi-dev build\n```\n\no:\n\n```text\niasi-dev build .\n```\n\n## Aumentar la información mostrada\n\n\n::: {#tbl-primeros-niveles .cell tbl-cap='Niveles habituales de información'}\n::: {.cell-output-display}\n\n\n|Opción |Uso                                           |\n|:------|:---------------------------------------------|\n|-v     |Mostrar información adicional.                |\n|-V     |Mostrar un nivel de detalle mayor.            |\n|-d     |Mostrar información destinada al diagnóstico. |\n\n\n:::\n:::\n\n\n## Continuar cuando un target falla\n\n```text\niasi-dev build -t .\n```\n\nEl modo tolerante permite excluir un target problemático y continuar con los siguientes cuando esa política sea apropiada.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

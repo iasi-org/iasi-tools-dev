@@ -1,0 +1,15 @@
+{
+  "hash": "721549e6af1946b119a7e4c190bed1c8",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Resultados y errores\n\n`iasi-dev` distingue diferentes tipos de resultado.\n\n\n::: {#tbl-resultados .cell tbl-cap='Tipos conceptuales de resultado'}\n::: {.cell-output-display}\n\n\n|Resultado   |Significado                                                            |\n|:-----------|:----------------------------------------------------------------------|\n|OK          |La operación se ha completado correctamente.                           |\n|NothingToDo |La operación es válida, pero no existe trabajo pendiente.              |\n|Warning     |Existe una condición relevante que no impide necesariamente continuar. |\n|Skip        |El target deja de participar en el procesamiento actual.               |\n|Error       |Se ha producido un error.                                              |\n|Severe      |Se ha producido un error de mayor severidad.                           |\n|Fatal       |Se ha producido una condición fatal.                                   |\n\n\n:::\n:::\n\n\n## Nada que hacer\n\nUn repositorio limpio durante `commit` es un ejemplo típico.\n\nNo existe ningún fallo: simplemente no hay trabajo pendiente.\n\n## Skip\n\n`Skip` describe una decisión de procesamiento. Resulta especialmente útil junto con el modo tolerante.\n\n## Normalización de resultados\n\nLas herramientas externas pueden utilizar códigos y convenciones diferentes.\n\n`iasi-dev` interpreta esas diferencias cuando es necesario y ofrece resultados homogéneos al resto de la ejecución. Desde la perspectiva del usuario, esto evita que las peculiaridades de cada herramienta alteren la forma general de trabajar con `iasi-dev`.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

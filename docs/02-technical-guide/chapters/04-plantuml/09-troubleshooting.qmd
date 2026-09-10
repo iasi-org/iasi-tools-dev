@@ -1,0 +1,743 @@
+## Resolución de problemas
+
+Los errores de PlantUML pueden aparecer en distintas etapas del pipeline.
+
+```text
+carga de la extensión
+lectura de configuración
+preparación de la fuente
+acceso al servidor
+compilación
+caché
+integración con Quarto
+```
+
+El mensaje final no siempre identifica por sí solo la causa real.
+
+La forma más eficaz de diagnosticar consiste en localizar primero qué componente ha fallado.
+
+## Orden de diagnóstico
+
+Siga este orden:
+
+```text
+1. comprobar que el filtro cargado es el correcto
+2. comprobar la configuración efectiva
+3. comprobar que el servidor responde
+4. comprobar la fuente PlantUML
+5. comprobar los archivos de estilo
+6. comprobar la caché
+7. revisar la integración con Quarto
+```
+
+No conviene comenzar borrando archivos al azar.
+
+Cada etapa deja señales distintas.
+
+## El filtro no se carga
+
+La publicación debe declarar:
+
+```yaml
+filters:
+  - extensions/plantuml/plantuml.lua
+```
+
+Y debe existir:
+
+```text
+extensions/plantuml/plantuml.lua
+```
+
+La extensión también depende del núcleo común:
+
+```text
+extensions/core/
+```
+
+Una copia incompleta puede contener `plantuml.lua`, pero carecer de:
+
+```text
+engine.lua
+config.lua
+cache.lua
+mediabag.lua
+filesystem.lua
+metadata.lua
+```
+
+La estructura debe conservarse completa.
+
+Una referencia relativa incorrecta dentro de `plantuml.lua` también impide cargar módulos como:
+
+```text
+compiler.lua
+defaults.lua
+engine.lua
+```
+
+Cuando el error menciona `require`, `dofile` o una ruta Lua, debe comprobarse qué archivo exacto está intentando cargar Quarto.
+
+## Se está editando otra copia
+
+Es posible tener varias copias de la extensión:
+
+```text
+dentro de la publicación
+en otro proyecto
+en recursos globales de Quarto
+en una instalación anterior
+```
+
+El error suele mostrar la ruta real del archivo ejecutado.
+
+Por ejemplo:
+
+```text
+...\resources\quarto\extensions\plantuml\compiler.lua
+```
+
+Esa ruta es la que debe revisarse.
+
+Modificar otro `compiler.lua` no cambia el comportamiento de la copia que Quarto está cargando.
+
+La primera pregunta debe ser:
+
+```text
+¿Qué archivo exacto aparece en el error?
+```
+
+## Error de sintaxis Lua
+
+Un error como:
+
+```text
+'end' expected near <eof>
+```
+
+indica que Lua ha llegado al final del archivo sin encontrar el cierre esperado.
+
+Las causas habituales son:
+
+```text
+una función sin end
+un if sin end
+un bucle sin end
+un archivo pegado dos veces
+una edición truncada
+```
+
+Cuando el mensaje indica:
+
+```text
+to close 'function' at line 134
+```
+
+debe revisarse esa función y el final del archivo.
+
+Un `compiler.lua` válido debe terminar con:
+
+```lua
+return Compiler
+```
+
+La solución no consiste en añadir un `end` al azar.
+
+Debe comprobarse si el archivo contiene contenido duplicado o incompleto.
+
+## El servidor no responde
+
+Compruebe primero la URL base:
+
+```bash
+curl http://localhost:1025
+```
+
+Después revise el contenedor:
+
+```bash
+docker ps --filter name=plantuml-server
+```
+
+Y sus mensajes:
+
+```bash
+docker logs plantuml-server
+```
+
+Si el contenedor no está en ejecución:
+
+```bash
+docker start plantuml-server
+```
+
+Con Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+Cuando el servidor está en otra máquina:
+
+```bash
+curl http://plantuml.local:1025
+```
+
+La prueba debe ejecutarse desde el mismo entorno que construye Quarto.
+
+## `localhost` apunta al lugar equivocado
+
+Dentro de:
+
+```text
+una máquina virtual
+un contenedor
+un agente CI
+otro equipo
+```
+
+`localhost` representa ese entorno.
+
+No representa automáticamente la máquina anfitriona.
+
+Si PlantUML se ejecuta fuera del entorno de construcción, configure una dirección accesible:
+
+```yaml
+server: http://plantuml.local:1025
+```
+
+También deben comprobarse:
+
+```text
+resolución del nombre
+puerto publicado
+reglas de red
+firewall
+ruta entre ambos entornos
+```
+
+## La URL contiene `/svg/`
+
+La URL solicitada al servidor revela el formato efectivo.
+
+```text
+http://localhost:1025/svg/...
+```
+
+significa que el compilador está solicitando SVG.
+
+```text
+http://localhost:1025/png/...
+```
+
+significa que está solicitando PNG.
+
+Si la configuración declara:
+
+```yaml
+format: png
+```
+
+pero el error muestra `/svg/`, las causas probables son:
+
+```text
+se está cargando otra copia del compilador
+la modificación no fue guardada
+la normalización del formato no se ejecuta
+otra configuración reemplaza el valor
+se está utilizando código antiguo
+```
+
+No debe atribuirse automáticamente a Quarto.
+
+La ruta pertenece a la petición construida por el compilador PlantUML.
+
+## Forzar temporalmente una comprobación
+
+Puede añadirse temporalmente dentro de `Compiler.compile()`:
+
+```lua
+error(
+  "DEBUG compiler: "
+    .. tostring(config.format)
+)
+```
+
+La construcción se detendrá mostrando el valor efectivo.
+
+Después de comprobarlo, debe eliminarse el diagnóstico.
+
+No conviene dejar errores deliberados dentro de la extensión.
+
+## SVG y construcción PDF
+
+Un flujo basado en SVG puede hacer que Quarto intente convertir la imagen para incorporarla al PDF.
+
+El error puede mencionar una herramienta como:
+
+```text
+rsvg-convert
+```
+
+Esto indica que el pipeline ha generado SVG y necesita una conversión adicional.
+
+La configuración recomendada evita esa dependencia utilizando:
+
+```yaml
+format: png
+```
+
+El flujo esperado es:
+
+```text
+PlantUML
+  -> PNG
+  -> PDF
+```
+
+Si el error continúa mencionando SVG, debe revisarse la URL efectiva y el archivo `compiler.lua` realmente cargado.
+
+## La respuesta está vacía
+
+La extensión puede detenerse con un mensaje equivalente a:
+
+```text
+PlantUML devolvió una respuesta vacía
+```
+
+Debe comprobarse:
+
+```text
+que el servidor está disponible
+que la URL generada es válida
+que el servidor admite el formato solicitado
+que la fuente PlantUML es aceptable
+que no existe un proxy o error de red
+```
+
+La URL incluida en el error permite reproducir la petición fuera de Quarto.
+
+No debe ocultarse ese dato durante el diagnóstico.
+
+## Error de fuente PlantUML
+
+Una fuente incorrecta puede contener:
+
+```text
+@startuml ausente
+@enduml ausente
+elementos sin cerrar
+sintaxis no reconocida
+macros inexistentes
+estereotipos mal escritos
+```
+
+Reduzca temporalmente el bloque a:
+
+````qmd
+```{.plantuml}
+@startuml
+Alice -> Bob: Prueba
+@enduml
+```
+````
+
+Si este ejemplo funciona, el problema está en la fuente original o en alguno de sus recursos.
+
+Después, reincorpore los elementos de forma gradual.
+
+## El estilo no puede leerse
+
+La configuración:
+
+```yaml
+styles:
+  - resources/plantuml/iasi.puml
+```
+
+exige que el archivo exista y sea legible.
+
+La extensión puede mostrar un error equivalente a:
+
+```text
+No se pudo leer el estilo PlantUML
+```
+
+Compruebe:
+
+```text
+la ruta
+el nombre exacto
+la extensión .puml
+los permisos
+la codificación
+el directorio desde el que se resuelve
+```
+
+En Windows, una diferencia de mayúsculas puede pasar inadvertida localmente y fallar después en Linux.
+
+Conviene mantener nombres exactos y consistentes.
+
+## El estilo produce un error
+
+Un archivo `.puml` también puede contener sintaxis inválida.
+
+Para aislarlo:
+
+```yaml
+styles: []
+```
+
+o retire temporalmente la opción `styles`.
+
+Después construya un diagrama mínimo.
+
+Si funciona sin el estilo:
+
+```text
+el servidor responde
+el filtro funciona
+el problema está en el archivo .puml
+```
+
+Revise sus últimas modificaciones antes de volver a activarlo.
+
+## El diagrama no cambia
+
+Primero compruebe que fueron guardados:
+
+```text
+el archivo .qmd
+el archivo .puml
+_quarto.yml
+compiler.lua
+```
+
+Después limpie únicamente la caché PlantUML:
+
+```powershell
+Remove-Item -Recurse -Force .quarto\plantuml -ErrorAction SilentlyContinue
+```
+
+Y vuelva a construir:
+
+```r
+build(
+  format = "html"
+)
+```
+
+Si la imagen sigue sin cambiar, compruebe qué copia de la extensión se está ejecutando.
+
+La caché no explica una modificación realizada en un archivo que Quarto nunca carga.
+
+## El diagrama funciona en HTML pero no en PDF
+
+Cuando HTML funciona, ya están verificados:
+
+```text
+la carga del filtro
+la configuración
+el servidor
+la sintaxis PlantUML
+la generación de la imagen
+```
+
+El fallo PDF puede estar en:
+
+```text
+el formato de imagen
+la conversión de recursos
+la instalación TeX
+la anchura del diagrama
+la integración de Quarto con PDF
+```
+
+Compruebe primero que la URL PlantUML utiliza `/png/`.
+
+Después revise:
+
+```bash
+quarto check
+```
+
+Si el error procede de LaTeX, debe tratarse como un problema del entorno PDF, no del servidor PlantUML.
+
+## El diagrama es demasiado ancho
+
+Un diagrama puede verse correctamente en HTML y resultar pequeño o ilegible en PDF.
+
+Las soluciones preferibles son:
+
+```text
+reducir el número de elementos
+dividir el diagrama
+cambiar la orientación
+acortar etiquetas
+crear una vista general y otra de detalle
+```
+
+Puede probarse:
+
+```plantuml
+top to bottom direction
+```
+
+en lugar de:
+
+```plantuml
+left to right direction
+```
+
+No conviene resolver toda la complejidad reduciendo la tipografía hasta convertir el diagrama en polvo técnico.
+
+## La tipografía cambia
+
+El servidor PlantUML utiliza las fuentes disponibles en su propio entorno.
+
+Un contenedor puede no tener la misma tipografía que el equipo anfitrión.
+
+Si el estilo declara:
+
+```plantuml
+skinparam defaultFontName Arial
+```
+
+pero Arial no existe dentro del servidor, PlantUML puede sustituirla.
+
+Esto puede cambiar:
+
+```text
+anchos
+saltos de línea
+tamaños
+disposición
+```
+
+La solución reproducible consiste en utilizar fuentes disponibles dentro de la infraestructura elegida o preparar una imagen de servidor que las incluya.
+
+## Caracteres incorrectos
+
+Los archivos deben guardarse en UTF-8:
+
+```text
+documentos .qmd
+estilos .puml
+archivos Lua
+configuración YAML
+```
+
+Cuando aparecen caracteres extraños, revise:
+
+```text
+codificación del documento
+codificación del estilo
+fuentes instaladas
+respuesta del servidor
+```
+
+No debe corregirse sustituyendo acentos por texto sin tildes.
+
+La publicación debe preservar correctamente su idioma.
+
+## Error al descargar la imagen
+
+La extensión utiliza `pandoc.mediabag.fetch` para obtener la respuesta del servidor.
+
+Un error en esta etapa puede deberse a:
+
+```text
+URL inaccesible
+servidor detenido
+error HTTP
+respuesta incompatible
+problema de red
+```
+
+El mensaje debe incluir la URL solicitada y el detalle devuelto por Pandoc.
+
+Pruebe esa misma URL desde el entorno de construcción.
+
+## MIME inesperado
+
+El compilador espera que el servidor devuelva un tipo compatible con el formato solicitado.
+
+Para PNG:
+
+```text
+image/png
+```
+
+Para SVG:
+
+```text
+image/svg+xml
+```
+
+Si el servidor devuelve una página HTML de error, una redirección o una respuesta intermedia, el contenido puede no ser una imagen válida.
+
+Compruebe:
+
+```text
+la URL completa
+el código HTTP
+el contenido recibido
+la configuración del servidor o proxy
+```
+
+Una respuesta HTTP correcta no garantiza por sí sola que el cuerpo sea el diagrama esperado.
+
+## Caché dañada
+
+Una entrada puede quedar incompleta por una interrupción durante la escritura o por una modificación del desarrollo.
+
+Limpie:
+
+```powershell
+Remove-Item -Recurse -Force .quarto\plantuml -ErrorAction SilentlyContinue
+```
+
+Después construya de nuevo.
+
+Si el problema reaparece en una caché limpia, la causa no es una entrada antigua.
+
+Debe revisarse la compilación o la escritura del artefacto.
+
+## Configuración no aplicada
+
+La configuración PlantUML debe estar bajo:
+
+```yaml
+filter-options:
+  plantuml:
+```
+
+No en una clave arbitraria.
+
+Ejemplo correcto:
+
+```yaml
+filters:
+  - extensions/plantuml/plantuml.lua
+
+filter-options:
+  plantuml:
+    enabled: true
+    server: http://localhost:1025
+    format: png
+    cache: true
+```
+
+Una indentación YAML incorrecta puede hacer que las opciones no pertenezcan a `plantuml`.
+
+Revise la estructura, no únicamente los valores.
+
+## Una publicación utiliza otro `_quarto.yml`
+
+En un multiproyecto puede haber:
+
+```text
+un _quarto.yml en la raíz
+un _quarto.yml en cada publicación
+perfiles HTML y PDF
+```
+
+La configuración efectiva depende de la publicación que se construye.
+
+Compruebe:
+
+```text
+qué libro fue seleccionado
+desde qué ruta se ejecutó build()
+qué perfiles se aplicaron
+dónde está declarado el filtro
+```
+
+No debe asumirse que todos los libros comparten automáticamente la misma extensión.
+
+## Limpieza mínima
+
+La limpieza recomendada para PlantUML es:
+
+```powershell
+Remove-Item -Recurse -Force .quarto\plantuml -ErrorAction SilentlyContinue
+```
+
+No se recomienda comenzar con:
+
+```text
+borrar todos los PNG
+borrar todos los SVG
+borrar toda la carpeta .quarto
+borrar la salida completa del libro
+reinstalar Quarto
+```
+
+La limpieza debe corresponder al componente sospechoso.
+
+## Diagnóstico completo
+
+Una secuencia práctica es:
+
+```text
+1. guardar todos los archivos
+2. leer la ruta exacta del error
+3. confirmar el compiler.lua cargado
+4. comprobar _quarto.yml
+5. abrir el servidor en el navegador
+6. ejecutar curl contra el servidor
+7. probar un diagrama mínimo
+8. desactivar temporalmente los estilos
+9. limpiar .quarto/plantuml
+10. construir solo HTML
+11. construir PDF
+```
+
+Cada paso reduce el espacio de búsqueda.
+
+## Tabla rápida
+
+| Síntoma | Causa probable | Comprobación |
+|---|---|---|
+| No se encuentra `plantuml.lua` | Ruta incorrecta | Revisar `filters` y estructura |
+| Error `require` o `dofile` | Copia incompleta o ruta Lua incorrecta | Revisar `extensions/core` |
+| `end expected near <eof>` | Archivo Lua truncado o duplicado | Revisar la línea indicada y el final |
+| No conecta con el servidor | Contenedor detenido o URL inaccesible | `curl`, `docker ps`, `docker logs` |
+| URL con `/svg/` | Formato efectivo SVG | Revisar `compiler.lua` cargado |
+| Error `rsvg-convert` | Quarto intenta convertir SVG para PDF | Forzar y verificar PNG |
+| No se puede leer `.puml` | Ruta o permisos incorrectos | Revisar `styles` |
+| Diagrama antiguo | Caché o copia de extensión equivocada | Guardar, verificar ruta y limpiar caché |
+| HTML funciona, PDF falla | Entorno PDF o formato de imagen | Revisar PNG, TeX y `quarto check` |
+| Tipografía distinta | Fuente ausente en el servidor | Revisar fuentes del contenedor |
+
+## Información útil al informar de un error
+
+Un informe útil debe incluir:
+
+```text
+mensaje completo
+ruta exacta del archivo Lua
+URL PlantUML mostrada
+formato solicitado
+configuración filter-options
+resultado de curl
+resultado de docker ps
+si falla HTML, PDF o ambos
+si ocurre con un diagrama mínimo
+```
+
+También conviene indicar:
+
+```text
+sistema operativo
+entorno de ejecución
+versión de Quarto
+versión de iasi.quarto
+versión de la extensión
+```
+
+No es necesario adjuntar toda la publicación para comenzar el diagnóstico.
+
+Una evidencia pequeña y precisa suele abrir la cerradura más rápido que una carretilla de logs.
+
+> El objetivo no es probar cosas hasta que funcione. Es identificar qué etapa dejó de cumplir su contrato.

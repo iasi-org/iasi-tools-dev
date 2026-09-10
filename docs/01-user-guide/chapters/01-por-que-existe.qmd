@@ -1,0 +1,51 @@
+# Por qué existe `iasi-dev`
+
+IASI no es un único programa ni un único repositorio. Está formado por múltiples componentes y artefactos sobre los que es necesario realizar operaciones de desarrollo de forma repetible y consistente.
+
+Sin una herramienta común, muchas tareas obligarían a repetir procedimientos manuales sobre distintos proyectos:
+
+```text
+entrar en un proyecto
+ejecutar una secuencia de comandos
+comprobar el resultado
+cambiar de proyecto
+repetir la secuencia
+```
+
+`iasi-dev` sustituye esa repetición por un modelo basado en una operación y una lista de targets.
+
+```text
+comando + targets
+```
+
+El usuario expresa qué quiere hacer y dónde quiere hacerlo. La herramienta aplica las reglas y convenciones del proyecto IASI para realizar la operación correspondiente.
+
+## Una herramienta específica de IASI
+
+`iasi-dev` no pretende ser una herramienta genérica de automatización.
+
+Su utilidad procede precisamente de conocer IASI: sus estructuras, sus tipos de artefacto, sus repositorios, sus recursos compartidos y sus operaciones habituales.
+
+Esa especificidad permite que una misma orden de usuario pueda aplicarse de forma coherente a elementos que internamente requieren tratamientos diferentes.
+
+## Procesamiento masivo
+
+El procesamiento de varios targets no es un añadido secundario. Forma parte del modelo normal de trabajo.
+
+```text
+iasi-dev build iasi-book-I iasi-book-II
+```
+
+La llamada expresa una única operación aplicada a dos targets.
+
+Esto permite realizar tareas de mantenimiento o desarrollo sobre conjuntos de proyectos sin convertir cada ejecución en una secuencia manual de comandos independientes.
+
+## Una plataforma que evoluciona con IASI
+
+IASI cambia y aparecen nuevas necesidades.
+
+`iasi-dev` está concebido para incorporar esas necesidades manteniendo una forma de uso estable y coherente. Cuando IASI incorpora nuevos artefactos, herramientas o procesos, la plataforma puede asumir el tratamiento necesario sin obligar al usuario a adoptar una colección creciente de procedimientos diferentes.
+
+El objetivo no es que `iasi-dev` sirva para cualquier proyecto.
+
+El objetivo es que siga sirviendo correctamente al proyecto IASI a medida que este evoluciona.

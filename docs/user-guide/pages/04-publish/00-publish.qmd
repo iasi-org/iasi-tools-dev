@@ -1,0 +1,32 @@
+---
+title: "Generar material publicable"
+---
+
+`publish` genera o prepara material destinado a publicación.
+
+Ejemplo:
+
+```powershell
+iasi-dev publish iasi-quarto
+```
+
+Publish trabaja únicamente con los artefactos publicables. Los demás se ignoran sin penalizar al repositorio.
+
+En la configuración actual, los tipos publicables son:
+
+```yaml
+type: quarto
+```
+
+y:
+
+```yaml
+type: book
+```
+
+Para artefactos Quarto, la operación se delega en:
+
+```text
+iasi.quarto::publish(...)
+```
+

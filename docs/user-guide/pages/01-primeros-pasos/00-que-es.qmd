@@ -1,0 +1,21 @@
+---
+title: "Qué hace iasi-dev"
+---
+
+`iasi-dev` es el punto de entrada para operar sobre repositorios IASI durante el desarrollo.
+
+Sus comandos principales son:
+
+```text
+build
+publish
+release
+commit
+deploy
+sync
+```
+
+Las operaciones sobre repositorios comparten una idea sencilla: reciben repositorios, procesan los que corresponden y continúan únicamente con los que han terminado correctamente.
+
+No necesita indicar siempre un repositorio. Si ejecuta un comando desde un directorio que contiene varios repositorios, `iasi-dev` puede trabajar sobre ellos como conjunto.
+

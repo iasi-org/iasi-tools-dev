@@ -1,0 +1,84 @@
+# Comandos
+
+```{r}
+#| label: tbl-comandos
+#| tbl-cap: "Comandos principales"
+
+commands = data.frame(
+  Comando = c("build", "publish", "commit", "release", "workflow", "sync"),
+  Finalidad = c(
+    "Construir los targets seleccionados.",
+    "Publicar los targets seleccionados.",
+    "Procesar los cambios de los repositorios seleccionados.",
+    "Materializar la estructura de release.",
+    "Ejecutar un flujo de trabajo de IASI.",
+    "Sincronizar elementos compartidos desde su origen canónico."
+  )
+)
+
+knitr::kable(commands, col.names = c("Comando", "Finalidad"), align = c("l", "l"))
+```
+
+## `build`
+
+```text
+iasi-dev build [targets...]
+```
+
+Construye los targets seleccionados utilizando el mecanismo adecuado para cada artefacto IASI.
+
+## `publish`
+
+```text
+iasi-dev publish [targets...]
+```
+
+Publica los targets seleccionados.
+
+## `commit`
+
+```text
+iasi-dev commit [targets...]
+```
+
+Procesa los cambios de los repositorios seleccionados.
+
+La operación comprueba si existen cambios, los incorpora al commit y crea el commit correspondiente. Cuando la ejecución no es local, puede realizar también la operación remota definida para el proceso.
+
+Si no hay cambios pendientes, el resultado es “nada que hacer”, no un error.
+
+Puede indicarse un mensaje:
+
+```text
+iasi-dev commit --message "Actualización de documentación" iasi-tools-dev
+```
+
+## `release`
+
+```text
+iasi-dev release [targets...]
+```
+
+Materializa la estructura de release definida para el proyecto.
+
+## `workflow`
+
+```text
+iasi-dev workflow [targets...]
+```
+
+Ejecuta un flujo de trabajo de IASI sobre los targets seleccionados.
+
+## `sync`
+
+```text
+iasi-dev sync <elemento...>
+```
+
+Sincroniza un elemento compartido desde su origen canónico hacia las copias existentes en el workspace.
+
+```text
+common
+  ↓
+copias existentes
+```

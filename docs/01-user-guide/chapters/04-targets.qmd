@@ -1,0 +1,52 @@
+# Targets
+
+Los targets son los elementos sobre los que se aplica una operación de `iasi-dev`.
+
+## Targets explícitos
+
+```text
+iasi-dev build iasi-book-I
+```
+
+```text
+iasi-dev build iasi-book-I iasi-book-II
+```
+
+## El target `.`
+
+`.` se interpreta según las reglas de resolución de IASI. No se trata simplemente como una cadena literal.
+
+## Sin targets explícitos
+
+Para los comandos que lo permiten, la ausencia de targets hace que `iasi-dev` determine los elementos aplicables desde el contexto actual.
+
+## Exclusiones
+
+Determinadas ubicaciones, como áreas de pruebas, pueden quedar fuera del procesamiento normal.
+
+## Targets solicitados y targets efectivos
+
+```{r}
+#| label: tbl-targets
+#| tbl-cap: "Dos vistas de los targets"
+
+targets = data.frame(
+  Vista = c("RequestedTargets", "Targets"),
+  Contenido = c(
+    "Lo que el usuario indicó explícitamente en la línea de comandos.",
+    "Los targets resultantes después de aplicar las reglas de resolución de IASI."
+  )
+)
+
+knitr::kable(targets, col.names = c("Vista", "Contenido"), align = c("l", "l"))
+```
+
+Esta diferencia resulta especialmente importante en comandos como `sync`.
+
+## `sync` requiere una petición explícita
+
+```text
+iasi-dev sync .gitattributes
+```
+
+`sync` no debe inferir automáticamente qué elemento desea sincronizar el usuario. Ejecutarlo sin ningún elemento explícito es un error.

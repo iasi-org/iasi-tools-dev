@@ -1,0 +1,70 @@
+Listado de rutas de carpetas para el volumen Windows
+El número de serie del volumen es 00000016 721C:BD90
+P:.
+│   firefox.sh
+│   tree.txt
+│   
+├───docker
+│       .env
+│       .env.bak
+│       compose.yml
+│       compose.yml.bak
+│       plantuml.docker
+│       
+├───plantuml
+│   │   iasi.puml
+│   │   README.md
+│   │   
+│   └───examples
+│           knowledge-flow.puml
+│           
+└───quarto
+    ├───core
+    │       cache.lua
+    │       config.lua
+    │       engine.lua
+    │       filesystem.lua
+    │       mediabag.lua
+    │       metadata.lua
+    │       README.md
+    │       
+    ├───templates
+    │   └───engine
+    │           compiler.lua
+    │           defaults.lua
+    │           engine-name.lua
+    │           README.md
+    │           _extension.yml
+    │           
+    └───_extensions
+        ├───plantuml
+        │       plantuml.lua
+        │       _extension.yml
+        │       
+        ├───plantuml2
+        │       plantuml2.lua
+        │       _extension.yml
+        │       _extension.yml.bak
+        │       
+        ├───plantuml3
+        │       plantuml3.lua
+        │       plantuml3.lua.bak
+        │       _extension.yml
+        │       _extension.yml.bak
+        │       
+        ├───plantuml4
+        │       example.qmd
+        │       plantuml4.lua
+        │       plantuml4.lua.bak
+        │       README.md
+        │       _extension.yml
+        │       _extension.yml.bak
+        │       
+        └───plantuml5
+                compiler.lua
+                defaults.lua
+                example.qmd
+                plantuml5.lua
+                README.md
+                _extension.yml
+                

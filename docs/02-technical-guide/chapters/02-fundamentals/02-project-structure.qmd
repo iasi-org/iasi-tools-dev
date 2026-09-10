@@ -1,0 +1,389 @@
+## Estructura de un proyecto
+
+Una publicación IASI Quarto sigue siendo un proyecto Quarto.
+
+`iasi.quarto` no sustituye su estructura ni introduce un contenedor documental propio. Añade una convención mínima que permite descubrir la publicación, comprobarla, preparar sus artefactos derivados y delegar finalmente el renderizado en Quarto.
+
+La estructura mínima de una publicación es:
+
+```text
+publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+La presencia conjunta de estos cuatro archivos identifica una publicación IASI Quarto.
+
+```{.plantuml}
+@startuml
+top to bottom direction
+
+folder "Publicación" {
+  file "_quarto.yml" as quarto
+  file "_quarto-html.yml" as html
+  file "_quarto-pdf.yml" as pdf
+  file "iasi.yml" as iasi
+}
+
+quarto -[hidden]-> html
+html -[hidden]-> pdf
+pdf -[hidden]-> iasi
+
+note right of iasi
+Los cuatro archivos
+forman la firma de
+la publicación
+end note
+@enduml
+```
+
+## Configuración general y configuración por formato
+
+El archivo `_quarto.yml` contiene la configuración común de Quarto:
+
+```yaml
+project:
+  type: book
+
+profile:
+  group:
+    - [html, pdf]
+
+metadata-files:
+  - _book-structure.yml
+```
+
+Las configuraciones específicas de cada salida se mantienen separadas:
+
+```text
+_quarto-html.yml
+  configuración de la publicación HTML
+
+_quarto-pdf.yml
+  configuración de la publicación PDF
+```
+
+Esta separación permite que una misma publicación produzca distintos formatos sin mezclar sus decisiones particulares.
+
+Por ejemplo, el HTML puede utilizar una hoja de estilos CSS, mientras que el PDF puede declarar opciones específicas de LaTeX.
+
+## Configuración de iasi.quarto
+
+El archivo `iasi.yml` describe cómo debe interpretar `iasi.quarto` el contenido de la publicación.
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Sus valores predeterminados son:
+
+```yaml
+publication:
+  strategy: regular
+  content-dir: chapters
+  numbered: true
+```
+
+Por tanto, una publicación puede omitir las propiedades que no necesite modificar.
+
+`iasi.yml` no contiene configuración de renderizado. Su responsabilidad es describir la organización editorial que `iasi.quarto` debe descubrir y preparar.
+
+## Directorio de contenido
+
+La propiedad `content-dir` señala dónde se encuentran los documentos de la publicación.
+
+```yaml
+publication:
+  content-dir: chapters
+```
+
+Con esta configuración, la estructura habitual es:
+
+```text
+publication/
+├── chapters/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+El nombre `chapters` es el valor predeterminado, pero no forma parte rígida del modelo.
+
+También sería válida una publicación como:
+
+```text
+publication/
+├── content/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+si `iasi.yml` declara:
+
+```yaml
+publication:
+  content-dir: content
+```
+
+## Documentos de raíz
+
+Los documentos situados en la raíz de la publicación pertenecen directamente al libro.
+
+Por ejemplo:
+
+```text
+publication/
+├── index.qmd
+├── manifesto.qmd
+├── principles.qmd
+├── licenses.qmd
+└── chapters/
+```
+
+`iasi.quarto` conserva estos documentos y los incorpora antes o después del contenido organizado en carpetas, según su posición dentro de la estructura preparada.
+
+El `index.qmd` de la raíz es siempre un documento del autor.
+
+No debe confundirse con los archivos `index.qmd` que pueden existir dentro del directorio de contenido.
+
+## Carpetas de contenido
+
+Cada carpeta inmediata de `content-dir` representa una unidad editorial.
+
+```text
+chapters/
+├── 01-fundamentals/
+├── 02-installation/
+└── 03-usage/
+```
+
+El significado exacto de cada carpeta depende de la estrategia de publicación.
+
+En una publicación `regular`, cada carpeta se convierte en un capítulo compuesto.
+
+En una publicación `structured`, cada carpeta se convierte en una parte que contiene capítulos independientes.
+
+La estructura física puede ser parecida, pero su interpretación editorial es distinta.
+
+## Estructura regular
+
+Una carpeta `regular` contiene documentos parciales que se ensamblan en un único capítulo.
+
+```text
+chapters/
+└── 01-fundamentals/
+    ├── front-matter.quarto
+    ├── 00-index.qmd
+    ├── 01-publication.qmd
+    └── 02-project-structure.qmd
+```
+
+El archivo `front-matter.quarto` es opcional.
+
+Cuando existe, contiene un front matter Quarto completo:
+
+```yaml
+---
+title: "Fundamentals"
+title-block-style: none
+---
+```
+
+`iasi.quarto` lo copia literalmente al principio del `index.qmd` generado.
+
+Los documentos `.qmd` contienen el cuerpo del capítulo:
+
+```qmd
+## La publicación
+
+Contenido de la sección.
+```
+
+Durante la preparación, `iasi.quarto` genera:
+
+```text
+chapters/
+└── 01-fundamentals/
+    ├── front-matter.quarto
+    ├── 00-index.qmd
+    ├── 01-publication.qmd
+    ├── 02-project-structure.qmd
+    └── index.qmd
+```
+
+El resultado derivado tiene esta forma:
+
+```{.qmd shortcodes=false}
+---
+title: "Fundamentals"
+title-block-style: none
+---
+
+<!-- Generated by iasi.quarto. Do not edit. -->
+
+{{{< include 00-index.qmd >}}}
+
+{{{< include 01-publication.qmd >}}}
+
+{{{< include 02-project-structure.qmd >}}}
+```
+
+En esta estrategia:
+
+```text
+el autor mantiene los documentos parciales
+iasi.quarto mantiene el index.qmd de la carpeta
+```
+
+Si `front-matter.quarto` no existe, el capítulo se genera sin front matter. Quarto podrá mostrar `index.html` como nombre de navegación, haciendo visible que falta la metadata editorial.
+
+## Estructura structured
+
+En una publicación `structured`, cada carpeta contiene capítulos independientes.
+
+```text
+chapters/
+└── 01-fundamentals/
+    ├── index.qmd
+    ├── 01-publication.qmd
+    └── 02-project-structure.qmd
+```
+
+El `index.qmd` de la carpeta pertenece al autor y actúa como introducción de la parte.
+
+Los demás documentos son capítulos completos y comienzan normalmente con un encabezado de primer nivel:
+
+```qmd
+# Estructura del proyecto
+```
+
+En esta estrategia, `iasi.quarto` no genera ni reemplaza el `index.qmd` de la carpeta.
+
+```text
+regular:
+  iasi.quarto mantiene el index.qmd
+
+structured:
+  el autor mantiene el index.qmd
+```
+
+## Archivos fuente y archivos derivados
+
+Una publicación contiene dos clases de archivos.
+
+Los archivos fuente son mantenidos por el autor:
+
+```text
+iasi.yml
+_quarto.yml
+_quarto-html.yml
+_quarto-pdf.yml
+front-matter.quarto
+*.qmd
+```
+
+Los archivos derivados son producidos por `iasi.quarto`:
+
+```text
+_book-structure.yml
+index.qmd de las carpetas regular
+```
+
+Esta separación es importante.
+
+Los archivos derivados pueden regenerarse en cualquier momento. No deben utilizarse como lugar de edición porque su contenido pertenece al proceso de preparación.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+rectangle "Archivos fuente" as source
+rectangle "iasi.quarto" as iasi
+rectangle "Archivos derivados" as derived
+rectangle "Quarto" as quarto
+rectangle "HTML / PDF" as output
+
+source --> iasi
+iasi --> derived
+source --> quarto
+derived --> quarto
+quarto --> output
+@enduml
+```
+
+## La estructura preparada
+
+Quarto necesita una relación explícita de los capítulos que forman el libro.
+
+`iasi.quarto` genera esa relación en:
+
+```text
+_book-structure.yml
+```
+
+Por ejemplo:
+
+```yaml
+book:
+  chapters:
+    - "index.qmd"
+    - "chapters/01-fundamentals/index.qmd"
+    - "chapters/02-installation/index.qmd"
+```
+
+El archivo `_quarto.yml` incorpora esta estructura mediante:
+
+```yaml
+metadata-files:
+  - _book-structure.yml
+```
+
+De esta forma, la configuración principal permanece estable mientras la estructura editorial puede regenerarse automáticamente.
+
+## Publicaciones múltiples
+
+Un directorio superior puede contener varias publicaciones independientes:
+
+```text
+workspace/
+├── 01-user-guide/
+│   ├── _quarto.yml
+│   ├── _quarto-html.yml
+│   ├── _quarto-pdf.yml
+│   └── iasi.yml
+│
+└── 02-developer-guide/
+    ├── _quarto.yml
+    ├── _quarto-html.yml
+    ├── _quarto-pdf.yml
+    └── iasi.yml
+```
+
+El directorio `workspace` no necesita ser una publicación ni contener un `iasi.yml`.
+
+`iasi.quarto` descubre recursivamente las carpetas que contienen la firma completa y trata cada una como una unidad de construcción independiente.
+
+## Una estructura explícita
+
+La estructura de una publicación IASI Quarto no pretende ocultar Quarto.
+
+Todos sus elementos continúan siendo visibles:
+
+```text
+los documentos siguen siendo .qmd
+la configuración sigue siendo YAML
+los perfiles siguen perteneciendo a Quarto
+los formatos finales siguen siendo generados por Quarto
+```
+
+`iasi.quarto` añade una capa de organización y preparación, pero mantiene abiertas las piezas que forman la publicación.
+
+> La estructura no reemplaza el proyecto Quarto. Lo hace reconocible, comprobable y reproducible.

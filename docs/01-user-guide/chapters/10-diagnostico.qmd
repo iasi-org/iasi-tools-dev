@@ -1,0 +1,37 @@
+# Diagnóstico
+
+Cuando una operación no hace lo esperado, conviene avanzar de forma ordenada.
+
+```{r}
+#| label: tbl-diagnostico
+#| tbl-cap: "Secuencia recomendada de diagnóstico"
+
+diagnostic = data.frame(
+  Paso = 1:5,
+  Accion = c(
+    "Identificar el target afectado.",
+    "Aumentar la verbosidad.",
+    "Activar debug cuando sea necesario seguir decisiones internas.",
+    "Revisar el log de ejecución.",
+    "Distinguir entre un error real y una operación que no tenía nada que hacer."
+  )
+)
+
+knitr::kable(diagnostic, col.names = c("Paso", "Acción"), align = c("r", "l"))
+```
+
+## Aumentar el detalle
+
+```text
+-v
+-V
+-d
+```
+
+## Revisar el log
+
+El log conserva la información de ejecución y las salidas producidas por las herramientas externas.
+
+## Operaciones masivas
+
+En una ejecución sobre múltiples targets, el modo tolerante puede ayudar a aislar un problema sin impedir observar el comportamiento de los demás targets.

@@ -1,0 +1,150 @@
+---
+title: "IASI Dev: Observabilidad, errores y códigos de retorno"
+date: 2026-09-04
+status: normative
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Un log por ejecución
+
+El log pertenece a la ejecución completa de `iasi-dev`.
+
+No pertenece a un repositorio, artefacto u operación hija.
+
+La ruta del log se calcula una sola vez en `main()` y se propaga mediante el contexto común de ejecución.
+
+Ubicación por defecto:
+
+```text
+<directorio-de-trabajo-actual>/logs/
+```
+
+Nombre:
+
+```text
+iasi-<command>-YYYYMMDDhhmmss.log
+```
+
+Ejemplo:
+
+```text
+C:\iasi-org\logs\iasi-build-20260904135416.log
+```
+
+# Regla de logging
+
+Todos los mensajes de IASI deben escribirse en el log con independencia de la verbosidad de consola.
+
+El stdout y stderr de comandos externos también deben escribirse en el mismo log.
+
+Una consola silenciosa no implica un log silencioso.
+
+El log es el registro diagnóstico completo de la ejecución.
+
+# Verbosidad de consola
+
+La verbosidad es numérica y también puede interpretarse como capacidades acumuladas por bits:
+
+```text
+0 = 000  silencioso
+1 = 001  normal
+3 = 011  detallado
+7 = 111  muy detallado
+```
+
+Mapeo:
+
+```text
+-s      → 0
+default → 1
+-v      → 3
+-V      → 7
+```
+
+Si está presente `-s`, prevalece y la verbosidad final de consola es cero.
+
+# Bits de visibilidad
+
+Conceptualmente:
+
+```text
+bit 0 → mensajes normales / nivel superior
+bit 1 → subproyectos, artefactos y progreso detallado
+bit 2 → mensajes de finalización o resultado muy detallado
+```
+
+Por tanto, el nivel `3` contiene visibilidad normal + detallada y el nivel `7` contiene las tres.
+
+# Ejemplos
+
+Por defecto:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+```
+
+Con `-v`:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+13:54:11 -     Construyendo 01-user-guide
+```
+
+Con `-V`:
+
+```text
+13:54:10 - Construyendo iasi-quarto
+13:54:11 -     Construyendo 01-user-guide
+13:54:16 -     01-user-guide: build completado.
+```
+
+Los mensajes `Info` del nivel normal deben destacarse visualmente en bold.
+
+# Modo tolerant
+
+El comportamiento por defecto es fail-fast.
+
+```text
+sin -t → el primer fallo del que la fase es propietaria detiene la fase
+con -t → avisar, eliminar el repositorio fallido cuando corresponda y continuar
+```
+
+El modo tolerant no debe ocultar el error subyacente en el log de ejecución.
+
+# Catálogo de códigos de retorno
+
+Los códigos de retorno del proceso se catalogan en el paquete `RC`.
+
+Los nombres omiten intencionadamente prefijos redundantes como `Exit` y sufijos como `Failed`.
+
+Catálogo actual:
+
+```go
+const (
+    OK               = 0
+    Error            = 1
+    InvalidArguments = 2
+    Build            = 10
+    Publish          = 20
+    Commit           = 30
+    Release          = 40
+    Deploy           = 50
+    Sync             = 60
+)
+```
+
+Uso:
+
+```go
+os.Exit(RC.OK)
+os.Exit(RC.Build)
+```
+
+No deben dispersarse por el código valores numéricos no explicados en llamadas a `os.Exit(...)`.
+
+# Propiedad de la parada
+
+La fase que decide que la ejecución debe detenerse debe utilizar directamente su código de retorno.
+
+No debe convertir una decisión de control de flujo en una cadena innecesaria de errores propagados hasta `main()`.

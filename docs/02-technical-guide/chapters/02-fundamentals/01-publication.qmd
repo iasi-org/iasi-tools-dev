@@ -1,0 +1,332 @@
+## La publicación IASI Quarto
+
+Una **publicación IASI Quarto** es un proyecto Quarto cuya estructura, configuración y proceso de construcción siguen las convenciones definidas por `iasi.quarto`.
+
+No es un tipo diferente de documento. Sigue siendo una publicación Quarto y puede utilizar sus formatos, extensiones y mecanismos habituales. `iasi.quarto` añade una capa de organización y automatización sobre ese proyecto:
+
+* reconoce publicaciones;
+* interpreta su estructura;
+* comprueba su coherencia;
+* genera los artefactos derivados;
+* coordina su construcción.
+
+La publicación continúa perteneciendo a Quarto. `iasi.quarto` no sustituye su motor, sino que organiza todo lo que ocurre antes de invocarlo.
+
+### La firma de una publicación
+
+Una carpeta se reconoce como publicación IASI Quarto cuando contiene estos cuatro archivos:
+
+```text
+_quarto.yml
+_quarto-html.yml
+_quarto-pdf.yml
+iasi.yml
+```
+
+Los cuatro forman la **firma de la publicación**.
+
+`_quarto.yml` contiene la configuración común del proyecto Quarto.
+
+`_quarto-html.yml` contiene la configuración específica del perfil HTML.
+
+`_quarto-pdf.yml` contiene la configuración específica del perfil PDF.
+
+`iasi.yml` declara cómo debe interpretar y preparar la publicación `iasi.quarto`.
+
+La coexistencia de los cuatro archivos es intencionada. La presencia aislada de `_quarto.yml` únicamente identifica un proyecto Quarto. La presencia aislada de `iasi.yml` tampoco es suficiente. Solo la firma completa identifica una publicación IASI Quarto.
+
+Una estructura mínima puede ser:
+
+```text
+my-publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+├── iasi.yml
+├── index.qmd
+└── chapters/
+```
+
+La firma permite reconocer el proyecto sin analizar todavía toda su configuración ni recorrer su contenido. El reconocimiento es deliberadamente superficial: primero se determina qué existe; después se estudia qué contiene.
+
+### Una publicación no es necesariamente un libro
+
+`iasi.quarto` utiliza el término **publicación** para referirse a la unidad que puede comprobarse, prepararse y construirse.
+
+Actualmente, el caso principal es un libro Quarto:
+
+```yaml
+project:
+  type: book
+```
+
+Sin embargo, la publicación y el tipo de proyecto son conceptos diferentes.
+
+La publicación es la unidad gestionada por `iasi.quarto`.
+
+El tipo indica cómo entiende Quarto ese proyecto:
+
+```text
+book
+website
+manuscript
+article
+```
+
+Esta separación evita incorporar en la arquitectura una equivalencia innecesaria:
+
+```text
+publicación ≠ libro
+```
+
+Un libro es un tipo posible de publicación. La publicación es el concepto más general.
+
+### Publicación individual
+
+Cuando la carpeta indicada contiene directamente la firma completa, se considera una **publicación individual**.
+
+Por ejemplo:
+
+```text
+user-guide/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+├── iasi.yml
+├── index.qmd
+└── chapters/
+```
+
+En este caso, la carpeta `user-guide/` es la raíz de la publicación.
+
+La construcción se realiza desde esa raíz y todos los archivos de configuración, contenido y salida se interpretan en relación con ella.
+
+```r
+validate("user-guide")
+```
+
+También puede validarse desde el propio directorio:
+
+```r
+validate()
+```
+
+### Multiproyecto
+
+Una carpeta puede actuar como contenedor de varias publicaciones independientes.
+
+```text
+docs/
+├── user-guide/
+│   ├── _quarto.yml
+│   ├── _quarto-html.yml
+│   ├── _quarto-pdf.yml
+│   ├── iasi.yml
+│   ├── index.qmd
+│   └── chapters/
+│
+└── developer-guide/
+    ├── _quarto.yml
+    ├── _quarto-html.yml
+    ├── _quarto-pdf.yml
+    ├── iasi.yml
+    ├── index.qmd
+    └── chapters/
+```
+
+La carpeta `docs/` no es una publicación. Es un **multiproyecto** que contiene dos publicaciones:
+
+```text
+user-guide
+developer-guide
+```
+
+Cada una conserva su propia configuración, estrategia, contenido y perfiles de salida.
+
+El multiproyecto permite construirlas conjuntamente sin convertirlas en partes de un único libro.
+
+```r
+validate("docs")
+```
+
+La validación reconoce el contenedor y localiza las publicaciones que contiene.
+
+La raíz del multiproyecto no necesita disponer de su propio `iasi.yml`. Su función es agrupar publicaciones completas, no comportarse como una publicación adicional.
+
+### La publicación actual tiene prioridad
+
+Cuando la carpeta indicada contiene la firma completa, se interpreta como una publicación individual aunque existan otras firmas en directorios descendientes.
+
+```text
+publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+├── iasi.yml
+├── index.qmd
+├── chapters/
+└── examples/
+    └── sample-book/
+        ├── _quarto.yml
+        ├── _quarto-html.yml
+        ├── _quarto-pdf.yml
+        └── iasi.yml
+```
+
+En este caso, `publication/` es la publicación actual. La publicación situada bajo `examples/` no se incorpora automáticamente al mismo plan de construcción.
+
+Esta regla evita que ejemplos, plantillas, pruebas o proyectos auxiliares se confundan con publicaciones hermanas.
+
+El reconocimiento sigue este orden:
+
+1. comprobar si la carpeta actual contiene la firma completa;
+2. si la contiene, tratarla como una publicación individual;
+3. si no la contiene, buscar publicaciones completas en sus descendientes;
+4. si se encuentran, tratar la carpeta como multiproyecto;
+5. si no se encuentra ninguna, concluir que no es un proyecto IASI Quarto.
+
+### Publicación y contenido
+
+La raíz de la publicación no obliga a utilizar un directorio llamado `chapters`.
+
+El directorio de contenido se declara en `iasi.yml`:
+
+```yaml
+publication:
+  content-dir: chapters
+```
+
+Podría utilizarse otro nombre:
+
+```yaml
+publication:
+  content-dir: content
+```
+
+Y la estructura correspondiente sería:
+
+```text
+my-publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+├── iasi.yml
+├── index.qmd
+└── content/
+```
+
+La publicación es la raíz completa del proyecto. El directorio de contenido es solo una de sus partes.
+
+Esta distinción permite que una publicación contenga, además del texto principal:
+
+```text
+images/
+resources/
+bibliography/
+extensions/
+scripts/
+outputs/
+```
+
+`iasi.quarto` no redefine toda la estructura de Quarto. Solo necesita conocer dónde se encuentra el contenido que debe organizar.
+
+### Archivos fuente y archivos derivados
+
+Dentro de una publicación existen dos clases de archivos.
+
+Los **archivos fuente** pertenecen al autor:
+
+```text
+index.qmd
+iasi.yml
+_quarto.yml
+_quarto-html.yml
+_quarto-pdf.yml
+chapters/01-intro/01-introduction.qmd
+```
+
+Los **archivos derivados** son generados por `iasi.quarto` durante la preparación:
+
+```text
+_book-structure.yml
+chapters/01-intro/index.qmd
+```
+
+La lista exacta depende de la estrategia de publicación.
+
+La diferencia es importante:
+
+* los archivos fuente expresan decisiones editoriales;
+* los archivos derivados materializan esas decisiones para Quarto.
+
+Un archivo derivado puede regenerarse. No debe convertirse accidentalmente en la única copia de contenido escrito por el autor.
+
+### Reconocer no significa construir
+
+El reconocimiento de una publicación no implica que sea válida ni que pueda construirse.
+
+Una carpeta puede contener la firma completa y, aun así, presentar problemas:
+
+```text
+iasi.yml mal formado
+estrategia desconocida
+directorio de contenido inexistente
+index.qmd raíz ausente
+estructura incompatible con la estrategia
+```
+
+Por eso `validate()` responde a una pregunta limitada:
+
+> ¿Existe aquí una publicación IASI Quarto o un multiproyecto reconocible?
+
+No genera archivos, no modifica el proyecto y no ejecuta Quarto.
+
+```r
+validate()
+```
+
+La construcción completa corresponde a:
+
+```r
+build()
+```
+
+Esta separación permite inspeccionar un proyecto antes de intervenir sobre él.
+
+### La publicación como unidad de construcción
+
+Una publicación reúne todo lo necesario para ejecutar una construcción independiente:
+
+```text
+configuración común
+configuración por formato
+declaración IASI
+contenido
+artefactos derivados
+salidas
+```
+
+En un multiproyecto, cada publicación mantiene esa independencia.
+
+Esto permite construir:
+
+* todas las publicaciones;
+* una publicación concreta;
+* todos los formatos;
+* un formato determinado.
+
+Por ejemplo:
+
+```r
+build(
+  book = "user-guide",
+  format = "html"
+)
+```
+
+La selección pertenece al proceso de construcción. La publicación, por su parte, continúa siendo una unidad completa y autosuficiente.
+
+Esa es la frontera fundamental del modelo:
+
+> Una publicación IASI Quarto es una unidad Quarto reconocible, configurable y construible de forma independiente.
+

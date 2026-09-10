@@ -1,0 +1,23 @@
+---
+title: "Deploy"
+---
+
+`deploy` orquesta la entrega.
+
+Sin `-f`:
+
+```powershell
+iasi-dev deploy
+```
+
+utiliza el estado ya preparado y realiza commit/push.
+
+Esto permite un flujo explícito:
+
+```powershell
+iasi-dev release iasi-quarto
+iasi-dev deploy
+```
+
+Primero se acepta la release concreta. Después se despliega el estado correspondiente.
+

@@ -1,0 +1,50 @@
+# Opciones
+
+```{r}
+#| label: tbl-opciones
+#| tbl-cap: "Opciones comunes de `iasi-dev`"
+
+options = data.frame(
+  Opcion = c("-s", "-v", "-V", "-d", "-t", "-f", "-i", "--format", "--message"),
+  Significado = c(
+    "Reducir la salida mostrada en consola.",
+    "Aumentar el nivel de información.",
+    "Mostrar un nivel de detalle mayor.",
+    "Activar información de diagnóstico.",
+    "Continuar con otros targets cuando un error pueda ser tolerado.",
+    "Solicitar procesamiento completo cuando el comando lo soporte.",
+    "Solicitar instalación cuando sea aplicable.",
+    "Indicar un formato.",
+    "Indicar un mensaje para las operaciones que lo utilicen."
+  )
+)
+
+knitr::kable(options, col.names = c("Opción", "Significado"), align = c("l", "l"))
+```
+
+## Modo tolerante
+
+Sin modo tolerante:
+
+```text
+A → OK
+B → ERROR
+    fin
+```
+
+Con modo tolerante:
+
+```text
+A → OK
+B → ERROR → SKIP
+C → OK
+D → OK
+```
+
+Tolerar un error no lo convierte en éxito. Modifica la decisión sobre si el procesamiento puede continuar con los siguientes targets.
+
+## Comportamiento local
+
+Cuando una operación dispone de una parte local y otra remota, el modo local limita la ejecución a las acciones locales.
+
+En `commit`, por ejemplo, la operación remota solo se realiza cuando la ejecución no está configurada como local.

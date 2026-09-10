@@ -1,0 +1,22 @@
+---
+title: "Construir repositorios"
+---
+
+El comando:
+
+```powershell
+iasi-dev build
+```
+
+recorre los repositorios seleccionados y construye sus artefactos reconocidos.
+
+Para un único repositorio:
+
+```powershell
+iasi-dev build iasi-quarto
+```
+
+Un repositorio solo se considera construido correctamente cuando todos los artefactos que debían construirse han terminado bien.
+
+Los tipos que no corresponden a build o no están soportados se ignoran. Ignorar un artefacto no convierte al repositorio en fallido.
+

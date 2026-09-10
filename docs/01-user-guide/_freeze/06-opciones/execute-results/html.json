@@ -1,0 +1,15 @@
+{
+  "hash": "add7dc72e850c7d80b1a204658ed73d6",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Opciones\n\n\n::: {#tbl-opciones .cell tbl-cap='Opciones comunes de `iasi-dev`'}\n::: {.cell-output-display}\n\n\n|Opción    |Significado                                                     |\n|:---------|:---------------------------------------------------------------|\n|-s        |Reducir la salida mostrada en consola.                          |\n|-v        |Aumentar el nivel de información.                               |\n|-V        |Mostrar un nivel de detalle mayor.                              |\n|-d        |Activar información de diagnóstico.                             |\n|-t        |Continuar con otros targets cuando un error pueda ser tolerado. |\n|-f        |Solicitar procesamiento completo cuando el comando lo soporte.  |\n|-i        |Solicitar instalación cuando sea aplicable.                     |\n|--format  |Indicar un formato.                                             |\n|--message |Indicar un mensaje para las operaciones que lo utilicen.        |\n\n\n:::\n:::\n\n\n## Modo tolerante\n\nSin modo tolerante:\n\n```text\nA → OK\nB → ERROR\n    fin\n```\n\nCon modo tolerante:\n\n```text\nA → OK\nB → ERROR → SKIP\nC → OK\nD → OK\n```\n\nTolerar un error no lo convierte en éxito. Modifica la decisión sobre si el procesamiento puede continuar con los siguientes targets.\n\n## Comportamiento local\n\nCuando una operación dispone de una parte local y otra remota, el modo local limita la ejecución a las acciones locales.\n\nEn `commit`, por ejemplo, la operación remota solo se realiza cuando la ejecución no está configurada como local.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

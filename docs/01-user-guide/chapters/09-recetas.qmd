@@ -1,0 +1,33 @@
+# Recetas
+
+```{r}
+#| label: tbl-recetas
+#| tbl-cap: "Operaciones habituales"
+
+recipes = data.frame(
+  Objetivo = c(
+    "Construir un proyecto",
+    "Construir varios proyectos",
+    "Construir desde el contexto actual",
+    "Publicar",
+    "Crear un commit",
+    "Crear un commit con mensaje",
+    "Procesar de forma tolerante",
+    "Diagnosticar una operación",
+    "Sincronizar un recurso común"
+  ),
+  Comando = c(
+    "iasi-dev build iasi-book-I",
+    "iasi-dev build iasi-book-I iasi-book-II",
+    "iasi-dev build .",
+    "iasi-dev publish iasi-book-I",
+    "iasi-dev commit iasi-tools-dev",
+    "iasi-dev commit --message 'Actualización del manual' iasi-tools-dev",
+    "iasi-dev build -t .",
+    "iasi-dev build -d iasi-book-I",
+    "iasi-dev sync .gitattributes"
+  )
+)
+
+knitr::kable(recipes, col.names = c("Objetivo", "Comando"), align = c("l", "l"))
+```

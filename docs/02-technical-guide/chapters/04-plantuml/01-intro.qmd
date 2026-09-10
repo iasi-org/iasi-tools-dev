@@ -1,0 +1,57 @@
+## Instalación
+
+`iasi.quarto` se distribuye como un paquete de R.
+
+Su instalación añade al entorno dos operaciones públicas:
+
+```r
+validate()
+build()
+```
+
+La primera reconoce una publicación IASI Quarto. La segunda ejecuta su ciclo completo de construcción.
+
+El paquete no sustituye a Quarto ni instala por sí mismo sus herramientas externas. Trabaja sobre un entorno en el que R y Quarto ya están disponibles.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+rectangle "R" as r
+rectangle "iasi.quarto" as iasi
+rectangle "Quarto" as quarto
+rectangle "HTML / PDF" as output
+
+r --> iasi
+iasi --> quarto
+quarto --> output
+@enduml
+```
+
+La instalación se divide en tres pasos:
+
+```text
+comprobar los requisitos
+instalar iasi.quarto
+verificar el entorno
+```
+
+En primer lugar, se comprueba que R y Quarto puedan ejecutarse correctamente.
+
+Después se instala el paquete desde su repositorio.
+
+Por último, se realiza una comprobación mínima para confirmar que `iasi.quarto` puede cargarse y reconocer una publicación.
+
+Este capítulo no pretende explicar cómo instalar R o Quarto en cada sistema operativo. Su objetivo es dejar preparado el entorno específico que necesita `iasi.quarto`.
+
+Al finalizar, debe ser posible ejecutar:
+
+```r
+library(iasi.quarto)
+
+validate()
+```
+
+y obtener un plan cuando el directorio actual contiene una publicación o un multiproyecto IASI Quarto.
+
+La instalación prepara la herramienta. La estructura y la configuración de la publicación siguen perteneciendo al proyecto.

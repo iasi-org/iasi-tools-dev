@@ -1,0 +1,18 @@
+---
+title: "Release selectiva"
+---
+
+Puede aceptar únicamente un repositorio:
+
+```powershell
+iasi-dev release iasi-quarto
+```
+
+y más tarde ejecutar:
+
+```powershell
+iasi-dev deploy
+```
+
+Esta separación permite decidir explícitamente qué material se promociona a release sin obligar a reconstruir todos los repositorios.
+

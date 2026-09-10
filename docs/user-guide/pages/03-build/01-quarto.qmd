@@ -1,0 +1,32 @@
+---
+title: "Construir artefactos Quarto"
+---
+
+Un artefacto:
+
+```yaml
+type: quarto
+```
+
+se construye mediante `iasi.quarto`.
+
+Puede seleccionar un formato:
+
+```powershell
+iasi-dev build --format html iasi-quarto
+```
+
+o:
+
+```powershell
+iasi-dev build --format "pdf" iasi-quarto
+```
+
+Con `-f`, `iasi-dev` solicita a `iasi.quarto` una construcción completa:
+
+```powershell
+iasi-dev build -f iasi-quarto
+```
+
+La lógica de Quarto permanece en `iasi.quarto`. El frontend selecciona el artefacto, transmite el contexto y ejecuta la operación.
+

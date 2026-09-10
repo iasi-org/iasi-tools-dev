@@ -1,0 +1,83 @@
+---
+title: "IASI Dev: Decisiones abiertas"
+date: 2026-09-04
+status: normative-pending
+scope: iasi-dev
+source: sesion-diseno
+---
+
+# Propósito
+
+Este documento registra decisiones que están deliberadamente **sin resolver**.
+
+No deben inferirse ni inventarse silenciosamente durante la implementación o durante la generación de definitions.
+
+# Materialización de release
+
+La regla central ya está aceptada:
+
+```text
+release = promover/copiar material aceptado desde outputs/ a releases/
+```
+
+Siguen pendientes:
+
+- mapeo exacto entre rutas de origen bajo `outputs/` y rutas de destino bajo `releases/`;
+- si la promoción es global al repositorio o selectiva por artefacto;
+- política de sobrescritura cuando ya existe un destino de release;
+- tratamiento de ficheros obsoletos que permanezcan en `releases/`;
+- comportamiento cuando un repositorio no tenga ningún output liberable;
+- posible necesidad de metadatos o manifests que describan el contenido de la release.
+
+Hasta cerrar estas decisiones, la implementación no debe inventar limpieza destructiva ni reglas implícitas de selección.
+
+# Ubicación de outputs de R package
+
+La semántica de build ya está aceptada:
+
+```text
+r-package
+→ paquete fuente
+→ paquete binario
+→ instalación persistente opcional solo con -i
+```
+
+La ubicación canónica de los paquetes fuente y binario generados dentro de la estructura `outputs/` del repositorio todavía no queda definida aquí.
+
+Debe resolverse antes de especificar con precisión la promoción a release de artefactos R package.
+
+# Semántica de build para `type: book`
+
+`type: book` está definido explícitamente como publicable mediante el camino de publicación Quarto.
+
+Su semántica específica de build todavía no se ha definido por separado.
+
+No debe asumirse que la inferencia del tipo de artefacto o un alias no documentado sea aceptable.
+
+Una decisión posterior podrá establecer si `book`:
+
+- es una especialización de `quarto`;
+- dispone de un handler de build propio;
+- o se representa de otra forma.
+
+# Uso de `RC.Deploy`
+
+`RC.Deploy` queda reservado para fallos cuya propiedad corresponda directamente a la orquestación deploy.
+
+Cuando deploy se limite a delegar y una fase hija sea propietaria del fallo, es preferible conservar el código de retorno específico de la fase hija antes que ocultarlo tras un código genérico de deploy.
+
+El uso exacto debe seguir la frontera final de implementación de deploy.
+
+# Futuros campos YAML
+
+Solo deben añadirse a `_iasi.yml` campos con un uso aceptado.
+
+No debe añadirse metadato especulativo únicamente porque pudiera resultar útil en el futuro.
+
+El discriminador explícito actual de artefacto es:
+
+```yaml
+type: ...
+```
+
+Los campos adicionales deben aparecer únicamente cuando exista un requisito real.

@@ -1,0 +1,741 @@
+## Ciclo de construcción
+
+`iasi.quarto` organiza la construcción de una publicación como una secuencia de etapas explícitas.
+
+La entrada pública principal es:
+
+```r
+build()
+```
+
+Internamente, la construcción sigue este flujo:
+
+```text
+build()
+  -> validate()
+  -> seleccionar publicaciones
+  -> .discover()
+  -> .check()
+  -> .prepare()
+  -> resolver formatos
+  -> .render()
+```
+
+Cada etapa tiene una responsabilidad concreta.
+
+No todas modifican archivos y no todas necesitan conocer los mismos detalles de la publicación.
+
+```{.plantuml}
+@startuml
+left to right direction
+
+rectangle "build()" as build
+rectangle "validate()" as validate
+rectangle "selección" as selection
+rectangle ".discover()" as discover
+rectangle ".check()" as check
+rectangle ".prepare()" as prepare
+rectangle ".render()" as render
+rectangle "HTML / PDF" as output
+
+build --> validate
+validate --> selection
+selection --> discover
+discover --> check
+check --> prepare
+prepare --> render
+render --> output
+@enduml
+```
+
+## `build()` como orquestador
+
+`build()` es la operación pública que coordina el proceso completo.
+
+```r
+build()
+```
+
+Puede construir:
+
+```text
+una publicación actual
+varias publicaciones dentro de un multiproyecto
+todos los formatos soportados
+un formato seleccionado
+```
+
+Por ejemplo:
+
+```r
+build(format = "html")
+```
+
+o:
+
+```r
+build(
+  book = "user-guide",
+  format = "pdf"
+)
+```
+
+`build()` no concentra toda la lógica en una única función.
+
+Delega cada decisión en la etapa que corresponde:
+
+```text
+reconocer el espacio de trabajo
+  validate()
+
+leer la configuración
+  .discover()
+
+comprobar el contrato
+  .check()
+
+generar artefactos derivados
+  .prepare()
+
+invocar Quarto
+  .render()
+```
+
+Esto permite que el proceso falle en el punto correcto y que cada etapa pueda entenderse de forma independiente.
+
+## Primera etapa: `validate()`
+
+`validate()` reconoce si una ruta contiene una publicación IASI Quarto o un multiproyecto que puede contener varias.
+
+```r
+plan = validate(".")
+```
+
+La función busca la firma de publicación:
+
+```text
+_quarto.yml
+_quarto-html.yml
+_quarto-pdf.yml
+iasi.yml
+```
+
+Si los cuatro archivos existen en la ruta actual, esa ruta se considera una publicación.
+
+Si no existen juntos, `validate()` puede reconocer la ruta como un contenedor desde el que después se localizarán publicaciones completas.
+
+El resultado es un plan:
+
+```r
+class(plan)
+```
+
+```text
+"iasi_quarto_plan"
+"list"
+```
+
+El plan contiene inicialmente:
+
+```text
+plan$path
+plan$current
+plan$books
+```
+
+### Publicación actual
+
+Cuando la propia ruta validada contiene la firma completa:
+
+```text
+plan$current = TRUE
+```
+
+La publicación actual tiene prioridad.
+
+No se buscan publicaciones anidadas porque la ruta ya representa una unidad de construcción completa.
+
+### Multiproyecto
+
+Cuando la ruta no es una publicación, pero contiene publicaciones descendientes:
+
+```text
+plan$current = FALSE
+```
+
+El plan actúa como contenedor de las publicaciones que podrán seleccionarse y descubrirse.
+
+`validate()` reconoce el terreno.
+
+Todavía no interpreta `iasi.yml` ni genera artefactos.
+
+## Selección de publicaciones
+
+En un multiproyecto, la selección ocurre después de `validate()` y antes de `.discover()`.
+
+```text
+validate()
+  -> seleccionar publicaciones
+  -> .discover()
+```
+
+Este orden es importante.
+
+Si el usuario solicita una publicación concreta:
+
+```r
+build(book = "user-guide")
+```
+
+solo esa publicación debe continuar por el pipeline.
+
+Una publicación no seleccionada no debe bloquear la construcción aunque contenga una configuración incompleta o inválida.
+
+La selección admite:
+
+```text
+nombre completo del directorio
+nombre sin prefijo numérico
+prefijo numérico
+```
+
+Por ejemplo, una carpeta:
+
+```text
+01-user-guide
+```
+
+puede seleccionarse mediante:
+
+```r
+build(book = "01-user-guide")
+```
+
+```r
+build(book = "user-guide")
+```
+
+```r
+build(book = "1")
+```
+
+En una publicación actual, el argumento `book` no es necesario porque la unidad de construcción ya está determinada.
+
+## Segunda etapa: `.discover()`
+
+`.discover()` transforma el plan validado en un modelo enriquecido de las publicaciones seleccionadas.
+
+```r
+plan = .discover(plan)
+```
+
+Durante esta fase se leen:
+
+```text
+_quarto.yml
+iasi.yml
+```
+
+y se determina:
+
+```text
+nombre de la publicación
+ruta
+tipo Quarto
+estrategia
+directorio de contenido
+uso de numeración
+configuración efectiva
+```
+
+Cada publicación descubierta se representa mediante un proyecto:
+
+```text
+project$name
+project$path
+project$quarto_file
+project$iasi_file
+project$type
+project$strategy
+project$content_dir
+project$content_path
+project$numbered
+project$quarto
+project$iasi
+```
+
+La clase del objeto es:
+
+```text
+iasi_quarto_project
+```
+
+### Aplicación de valores predeterminados
+
+`.discover()` completa las propiedades ausentes de `iasi.yml`.
+
+Por ejemplo:
+
+```yaml
+publication:
+  strategy: structured
+```
+
+se descubre como:
+
+```yaml
+publication:
+  strategy: structured
+  content-dir: chapters
+  numbered: true
+```
+
+La etapa distingue entre:
+
+```text
+configuración ausente
+  se completa con valores predeterminados
+
+YAML ilegible
+  detiene el descubrimiento
+```
+
+Un archivo que no puede interpretarse como YAML no puede convertirse en un proyecto descubierto.
+
+## Tercera etapa: `.check()`
+
+`.check()` verifica que las publicaciones descubiertas respeten el contrato de `iasi.quarto`.
+
+```r
+plan = .check(plan)
+```
+
+La comprobación se ocupa de aspectos semánticos y estructurales.
+
+Por ejemplo:
+
+```text
+estrategia soportada
+content-dir válido
+numbered lógico
+propiedades conocidas
+convenciones de nombres
+estructura coherente con la estrategia
+```
+
+Un YAML puede estar bien formado y, aun así, ser incorrecto:
+
+```yaml
+publication:
+  strategy: automatic
+```
+
+`.discover()` puede leerlo, pero `.check()` debe rechazarlo porque `automatic` no es una estrategia soportada.
+
+### Resultado de la comprobación
+
+Cada proyecto recibe un estado:
+
+```text
+project$valid
+```
+
+El plan resume el resultado:
+
+```text
+plan$valid
+```
+
+La construcción solo continúa si todas las publicaciones seleccionadas son válidas.
+
+```text
+plan$valid = TRUE
+  -> continúa hacia .prepare()
+
+plan$valid = FALSE
+  -> se detiene antes de generar artefactos
+```
+
+Esta separación evita que una publicación incorrecta llegue hasta Quarto y produzca errores más tardíos y menos precisos.
+
+## Cuarta etapa: `.prepare()`
+
+`.prepare()` genera la estructura derivada que Quarto necesita para renderizar la publicación.
+
+```r
+plan = .prepare(plan)
+```
+
+Esta es la primera etapa que puede escribir archivos.
+
+Los artefactos generados dependen de la estrategia.
+
+### Preparación `regular`
+
+En una publicación `regular`, `.prepare()` genera el `index.qmd` de cada carpeta editorial.
+
+```text
+chapters/01-fundamentals/index.qmd
+```
+
+Ese archivo:
+
+```text
+copia front-matter.quarto si existe
+añade la cabecera de archivo generado
+incluye los documentos parciales en orden
+```
+
+También genera:
+
+```text
+_book-structure.yml
+```
+
+con los capítulos compuestos que Quarto debe procesar.
+
+### Preparación `structured`
+
+En una publicación `structured`, `.prepare()` conserva los `index.qmd` mantenidos por el autor.
+
+No los reemplaza.
+
+Su trabajo principal consiste en construir `_book-structure.yml` con:
+
+```text
+partes
+introducciones de parte
+capítulos independientes
+```
+
+### Preparación `direct`
+
+En una publicación `direct`, `.prepare()` aplica la mínima transformación necesaria.
+
+No construye capítulos compuestos ni convierte automáticamente cada carpeta en una parte.
+
+### Artefactos
+
+La publicación preparada mantiene información sobre los archivos derivados:
+
+```text
+publication$chapters
+publication$artifacts
+publication$changed
+```
+
+`publication$changed` indica si la preparación tuvo que modificar algún artefacto.
+
+## Idempotencia de la preparación
+
+La preparación debe ser idempotente.
+
+Esto significa que ejecutar dos veces el mismo proceso sobre las mismas fuentes no debe reescribir continuamente los mismos archivos.
+
+```r
+build()
+build()
+```
+
+Si nada ha cambiado:
+
+```text
+primera ejecución
+  puede generar artefactos
+
+segunda ejecución
+  encuentra el mismo contenido
+  no vuelve a escribirlo
+```
+
+La escritura se realiza únicamente cuando el contenido nuevo es distinto del existente.
+
+Esto reduce:
+
+```text
+cambios innecesarios en Git
+marcas de tiempo artificiales
+reconstrucciones provocadas por archivos idénticos
+ruido en el proceso
+```
+
+La idempotencia convierte los artefactos derivados en resultados reproducibles, no en residuos de cada ejecución.
+
+## Resolución de formatos
+
+Después de preparar la publicación, `build()` determina los formatos que deben renderizarse.
+
+Los formatos soportados actualmente son:
+
+```text
+html
+pdf
+```
+
+Cuando no se indica ninguno:
+
+```r
+build()
+```
+
+se construyen todos los formatos soportados.
+
+También puede elegirse uno:
+
+```r
+build(format = "html")
+```
+
+o:
+
+```r
+build(format = "pdf")
+```
+
+La resolución de formatos pertenece al orquestador público.
+
+`.render()` recibe un único formato ya resuelto y no vuelve a validarlo.
+
+```text
+build()
+  decide qué formatos
+
+.render()
+  ejecuta un formato
+```
+
+## Quinta etapa: `.render()`
+
+`.render()` es una operación privada y mínima.
+
+Recibe:
+
+```text
+una publicación preparada
+un formato resuelto
+```
+
+Su contrato conceptual es:
+
+```r
+.render(publication, format)
+```
+
+Por ejemplo:
+
+```text
+publicación 01-user-guide
+formato html
+```
+
+representa una ejecución.
+
+La misma publicación en PDF representa otra:
+
+```text
+publicación 01-user-guide
+formato pdf
+```
+
+En un multiproyecto con dos publicaciones y dos formatos, `build()` coordina cuatro renderizados:
+
+```text
+01-user-guide      -> html
+01-user-guide      -> pdf
+02-developer-guide -> html
+02-developer-guide -> pdf
+```
+
+### Delegación en Quarto
+
+`.render()` no implementa un motor documental propio.
+
+Invoca Quarto con el perfil y formato correspondientes:
+
+```text
+quarto render --profile html --to html
+```
+
+o:
+
+```text
+quarto render --profile pdf --to pdf
+```
+
+La publicación ya debe estar validada, descubierta, comprobada y preparada.
+
+`.render()` no vuelve hacia atrás para resolver problemas de configuración o estructura.
+
+### Resultado
+
+Después de un renderizado correcto, la publicación registra:
+
+```text
+publication$rendered
+publication$profiles
+```
+
+Por ejemplo:
+
+```text
+publication$rendered = TRUE
+publication$profiles = c("html", "pdf")
+```
+
+## Fallar antes de renderizar
+
+Una propiedad importante del ciclo es que los errores se detecten lo antes posible.
+
+```text
+ruta no reconocible
+  validate()
+
+YAML ilegible
+  .discover()
+
+configuración o estructura inválida
+  .check()
+
+problema al generar artefactos
+  .prepare()
+
+fallo real de Quarto
+  .render()
+```
+
+Cada problema pertenece a una etapa.
+
+Esto evita utilizar el renderizado como mecanismo genérico de validación.
+
+Quarto debe recibir una publicación ya preparada, no una colección de decisiones pendientes.
+
+## Ciclo de una publicación individual
+
+Para una publicación actual:
+
+```text
+publication/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+el flujo es:
+
+```text
+build()
+  reconoce la publicación
+  descubre su configuración
+  comprueba su estructura
+  prepara sus artefactos
+  renderiza HTML y PDF
+```
+
+No existe selección entre publicaciones porque la ruta actual ya es la unidad de construcción.
+
+## Ciclo de un multiproyecto
+
+Para:
+
+```text
+workspace/
+├── 01-user-guide/
+└── 02-developer-guide/
+```
+
+el flujo es:
+
+```text
+build()
+  reconoce el workspace
+  selecciona publicaciones
+  descubre solo las seleccionadas
+  comprueba cada una
+  prepara cada una
+  renderiza cada combinación de publicación y formato
+```
+
+La unidad de trabajo de `.render()` sigue siendo una publicación y un formato.
+
+El multiproyecto solo amplía la orquestación.
+
+```{.plantuml}
+@startuml
+top to bottom direction
+
+rectangle "workspace" as workspace
+rectangle "01-user-guide" as user
+rectangle "02-developer-guide" as developer
+
+rectangle "HTML" as user_html
+rectangle "PDF" as user_pdf
+rectangle "HTML " as developer_html
+rectangle "PDF " as developer_pdf
+
+workspace --> user
+workspace --> developer
+
+user --> user_html
+user --> user_pdf
+
+developer --> developer_html
+developer --> developer_pdf
+@enduml
+```
+
+## Estado acumulado
+
+El plan se enriquece durante el proceso.
+
+```text
+validate()
+  crea el plan
+
+.discover()
+  añade proyectos y configuración
+
+.check()
+  añade el resultado de comprobación
+
+.prepare()
+  añade publicaciones y artefactos
+
+.render()
+  añade formatos renderizados
+```
+
+El resultado final de `build()` no es únicamente un código de salida.
+
+Es el plan completado, con información sobre lo que se descubrió, preparó y renderizó.
+
+```r
+plan = build()
+```
+
+Aunque `build()` lo devuelve de forma invisible, el objeto puede conservarse para inspección.
+
+## Un pipeline deliberado
+
+El ciclo de construcción separa reconocimiento, interpretación, comprobación, preparación y ejecución.
+
+```text
+validate
+  ¿es un espacio IASI Quarto?
+
+discover
+  ¿qué contiene y cómo está configurado?
+
+check
+  ¿es coherente con el contrato?
+
+prepare
+  ¿qué artefactos necesita Quarto?
+
+render
+  ¿puede Quarto producir el formato solicitado?
+```
+
+Cada etapa reduce incertidumbre antes de pasar a la siguiente.
+
+> `build()` no es un único salto desde los fuentes hasta el PDF. Es una cadena de decisiones comprobables.

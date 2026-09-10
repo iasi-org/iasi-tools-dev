@@ -1,0 +1,48 @@
+---
+title: "IASI Dev User Guide"
+---
+
+`iasi-dev` reúne las operaciones habituales de construcción, publicación, aceptación y entrega de los repositorios IASI.
+
+Este manual está pensado para **usar la herramienta**, no para explicar cómo está implementada.
+
+El flujo conceptual es:
+
+```text
+build
+  genera resultados de trabajo
+
+publish
+  genera material publicable
+
+release
+  acepta y promociona material generado
+
+commit
+  guarda y envía el estado Git
+
+deploy
+  orquesta la entrega
+```
+
+La distinción central es:
+
+```text
+outputs/   = material generado
+releases/  = material aceptado
+```
+
+Puede construir, publicar y hacer commits tantas veces como necesite sin convertir automáticamente esos resultados en una release.
+
+También puede trabajar de dos maneras:
+
+```text
+paso a paso
+build → publish → release → deploy
+
+orquestado
+deploy -f
+```
+
+Las dos utilizan las mismas operaciones. Cambia únicamente cuánto quiere delegar en una sola invocación.
+

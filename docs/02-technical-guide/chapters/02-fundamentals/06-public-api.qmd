@@ -1,0 +1,788 @@
+## API pública
+
+La API pública de `iasi.quarto` es deliberadamente pequeña.
+
+Actualmente expone dos funciones:
+
+```r
+validate()
+build()
+```
+
+El resto del ciclo de construcción permanece como implementación interna:
+
+```text
+.discover()
+.check()
+.prepare()
+.render()
+```
+
+Esta separación establece una frontera clara entre:
+
+```text
+lo que utiliza quien publica
+lo que coordina internamente el paquete
+```
+
+La API pública no reproduce cada fase del pipeline como una operación independiente. Ofrece únicamente los puntos de entrada necesarios para reconocer una publicación y construirla.
+
+## `validate()`
+
+`validate()` reconoce una publicación IASI Quarto o un multiproyecto.
+
+```r
+plan = validate()
+```
+
+También puede recibir una ruta explícita:
+
+```r
+plan = validate("path/to/workspace")
+```
+
+Su firma conceptual es:
+
+```r
+validate(path = ".")
+```
+
+La función comprueba la presencia de la firma IASI Quarto:
+
+```text
+_quarto.yml
+_quarto-html.yml
+_quarto-pdf.yml
+iasi.yml
+```
+
+Cuando los cuatro archivos están presentes en la ruta indicada, esa ruta se reconoce como una publicación actual.
+
+Cuando no están presentes juntos, la ruta puede reconocerse como un contenedor desde el que posteriormente se descubrirán publicaciones completas.
+
+## Resultado de `validate()`
+
+Cuando la ruta corresponde a un espacio IASI Quarto, `validate()` devuelve invisiblemente un plan:
+
+```r
+class(plan)
+```
+
+```text
+"iasi_quarto_plan"
+"list"
+```
+
+El plan inicial contiene:
+
+```text
+plan$path
+plan$current
+plan$books
+```
+
+### `plan$path`
+
+Contiene la ruta normalizada utilizada como raíz del proceso.
+
+```r
+plan$path
+```
+
+Representa la publicación actual o el multiproyecto validado.
+
+### `plan$current`
+
+Indica si la propia ruta es una publicación completa:
+
+```r
+plan$current
+```
+
+```text
+TRUE
+  la ruta actual contiene la firma completa
+
+FALSE
+  la ruta actúa como contenedor de publicaciones
+```
+
+Cuando `current` es `TRUE`, la publicación actual tiene prioridad y no se buscan publicaciones anidadas.
+
+### `plan$books`
+
+Contiene las publicaciones candidatas localizadas desde un multiproyecto.
+
+En una publicación actual, la unidad de construcción ya está determinada y no es necesario seleccionar entre varios libros.
+
+## Ruta no reconocida
+
+Cuando la ruta no parece una publicación ni un multiproyecto IASI Quarto, `validate()` devuelve:
+
+```r
+NULL
+```
+
+Por ejemplo:
+
+```r
+plan = validate("empty-directory")
+
+is.null(plan)
+```
+
+```text
+TRUE
+```
+
+Esto permite utilizar `validate()` como operación de reconocimiento sin iniciar una construcción completa.
+
+## Qué hace `validate()`
+
+`validate()` responde a una pregunta limitada:
+
+> ¿La ruta parece contener un espacio de trabajo IASI Quarto?
+
+No:
+
+```text
+interpreta por completo iasi.yml
+comprueba toda la estructura editorial
+genera index.qmd
+genera _book-structure.yml
+invoca Quarto
+```
+
+Esas tareas pertenecen a etapas posteriores del pipeline.
+
+La función valida la frontera exterior del espacio de trabajo, no toda su semántica interna.
+
+## Ejemplo con una publicación
+
+Dada esta estructura:
+
+```text
+user-guide/
+├── _quarto.yml
+├── _quarto-html.yml
+├── _quarto-pdf.yml
+└── iasi.yml
+```
+
+la llamada:
+
+```r
+plan = validate("user-guide")
+```
+
+produce conceptualmente:
+
+```text
+plan$current = TRUE
+plan$path    = ".../user-guide"
+```
+
+## Ejemplo con un multiproyecto
+
+Dada esta estructura:
+
+```text
+workspace/
+├── 01-user-guide/
+│   ├── _quarto.yml
+│   ├── _quarto-html.yml
+│   ├── _quarto-pdf.yml
+│   └── iasi.yml
+│
+└── 02-developer-guide/
+    ├── _quarto.yml
+    ├── _quarto-html.yml
+    ├── _quarto-pdf.yml
+    └── iasi.yml
+```
+
+la llamada:
+
+```r
+plan = validate("workspace")
+```
+
+produce un plan de multiproyecto:
+
+```text
+plan$current = FALSE
+```
+
+y conserva las publicaciones candidatas para la selección posterior.
+
+## `build()`
+
+`build()` es el punto de entrada principal del paquete.
+
+```r
+build()
+```
+
+Su firma pública es:
+
+```r
+build(
+  book = NULL,
+  format = NULL,
+  path = "."
+)
+```
+
+La función ejecuta el ciclo completo:
+
+```text
+validate()
+selección de publicaciones
+.discover()
+.check()
+.prepare()
+.render()
+```
+
+`build()` puede operar sobre:
+
+```text
+la publicación actual
+todas las publicaciones de un multiproyecto
+una publicación seleccionada
+todos los formatos soportados
+un formato concreto
+```
+
+## Construcción predeterminada
+
+La llamada más sencilla es:
+
+```r
+build()
+```
+
+Cuando se ejecuta dentro de una publicación:
+
+```text
+construye la publicación actual
+genera HTML
+genera PDF
+```
+
+Cuando se ejecuta en un multiproyecto:
+
+```text
+construye todas las publicaciones descubiertas
+genera todos los formatos soportados
+```
+
+Los formatos soportados actualmente son:
+
+```text
+html
+pdf
+```
+
+## Argumento `path`
+
+`path` indica la publicación o multiproyecto que debe construirse.
+
+```r
+build(path = "path/to/publication")
+```
+
+Su valor predeterminado es:
+
+```r
+path = "."
+```
+
+Por tanto, `build()` trabaja normalmente sobre el directorio actual.
+
+Ejemplos:
+
+```r
+build(path = "01-user-guide")
+```
+
+```r
+build(path = "workspace")
+```
+
+La ruta se valida antes de iniciar las demás etapas.
+
+Si no corresponde a un espacio IASI Quarto, `build()` devuelve invisiblemente:
+
+```r
+NULL
+```
+
+## Argumento `format`
+
+`format` selecciona el formato o formatos de salida.
+
+Puede utilizarse:
+
+```r
+build(format = "html")
+```
+
+```r
+build(format = "pdf")
+```
+
+También puede indicarse:
+
+```r
+build(format = "all")
+```
+
+Los valores:
+
+```r
+NULL
+```
+
+y:
+
+```r
+"all"
+```
+
+seleccionan todos los formatos soportados.
+
+Conceptualmente:
+
+```text
+format = NULL
+  -> html y pdf
+
+format = "all"
+  -> html y pdf
+
+format = "html"
+  -> solo html
+
+format = "pdf"
+  -> solo pdf
+```
+
+Un formato no soportado produce un error antes del renderizado:
+
+```r
+build(format = "docx")
+```
+
+```text
+Unsupported format: "docx".
+```
+
+La validación de formatos pertenece a `build()`.
+
+`.render()` recibe siempre un formato ya resuelto.
+
+## Argumento `book`
+
+`book` selecciona una o varias publicaciones dentro de un multiproyecto.
+
+Por ejemplo:
+
+```r
+build(book = "user-guide")
+```
+
+La selección admite tres formas.
+
+### Nombre completo
+
+```r
+build(book = "01-user-guide")
+```
+
+### Nombre sin prefijo numérico
+
+```r
+build(book = "user-guide")
+```
+
+### Prefijo numérico
+
+```r
+build(book = "1")
+```
+
+Las tres expresiones pueden seleccionar:
+
+```text
+01-user-guide
+```
+
+También pueden solicitarse varias publicaciones:
+
+```r
+build(
+  book = c(
+    "user-guide",
+    "developer-guide"
+  )
+)
+```
+
+## `book = NULL` y `book = "all"`
+
+Cuando `book` no se indica:
+
+```r
+build(book = NULL)
+```
+
+se construyen todas las publicaciones disponibles en el multiproyecto.
+
+También puede expresarse:
+
+```r
+build(book = "all")
+```
+
+En una publicación actual, la selección mediante `book` no es necesaria.
+
+La ruta ya identifica la única publicación que debe construirse.
+
+## Selecciones no encontradas
+
+Cuando una selección no existe, `build()` informa mediante una advertencia.
+
+Por ejemplo:
+
+```r
+build(
+  book = c(
+    "user-guide",
+    "missing"
+  )
+)
+```
+
+puede continuar construyendo `user-guide` y advertir:
+
+```text
+Books not found: "missing".
+```
+
+Una publicación no encontrada no se inventa ni se sustituye por otra coincidencia aproximada.
+
+## Selección antes del descubrimiento
+
+La selección se aplica antes de `.discover()`.
+
+```text
+validate()
+  -> selección
+  -> .discover()
+```
+
+Esto tiene una consecuencia importante.
+
+Una publicación no seleccionada no participa en:
+
+```text
+lectura de iasi.yml
+comprobación
+preparación
+renderizado
+```
+
+Por tanto, una publicación experimental o incompleta no bloquea la construcción de otra publicación seleccionada.
+
+## Ejemplos de uso
+
+### Construir la publicación actual
+
+```r
+build()
+```
+
+### Construir solo HTML
+
+```r
+build(format = "html")
+```
+
+### Construir solo PDF
+
+```r
+build(format = "pdf")
+```
+
+### Construir un multiproyecto completo
+
+```r
+build(path = "workspace")
+```
+
+### Construir una publicación del multiproyecto
+
+```r
+build(
+  path = "workspace",
+  book = "user-guide"
+)
+```
+
+### Construir una publicación y un formato
+
+```r
+build(
+  path = "workspace",
+  book = "user-guide",
+  format = "html"
+)
+```
+
+### Construir varias publicaciones
+
+```r
+build(
+  path = "workspace",
+  book = c(
+    "1",
+    "developer-guide"
+  ),
+  format = "pdf"
+)
+```
+
+## Resultado de `build()`
+
+`build()` devuelve invisiblemente el plan completado:
+
+```r
+plan = build()
+```
+
+El objeto conserva información acumulada durante el pipeline.
+
+Por ejemplo:
+
+```text
+plan$path
+plan$current
+plan$projects
+plan$valid
+plan$formats
+plan$rendered
+plan$elapsed
+```
+
+Cada proyecto puede contener su publicación preparada:
+
+```text
+plan$projects[[1]]$publication
+```
+
+y esta puede registrar:
+
+```text
+publication$chapters
+publication$artifacts
+publication$changed
+publication$rendered
+publication$profiles
+```
+
+La devolución invisible permite dos formas de uso.
+
+Uso habitual:
+
+```r
+build()
+```
+
+Uso con inspección:
+
+```r
+plan = build()
+
+plan$formats
+plan$elapsed
+```
+
+## Mensajes de construcción
+
+Aunque el plan se devuelve invisiblemente, `build()` informa del proceso mediante mensajes.
+
+La salida puede mostrar:
+
+```text
+publicaciones reconocidas
+estado de comprobación
+formatos construidos
+resultado final
+tiempo empleado
+```
+
+Los mensajes están dirigidos a la persona que ejecuta la construcción.
+
+El objeto devuelto está dirigido a la inspección programática.
+
+## API pública y funciones privadas
+
+Las fases internas no forman parte del contrato público:
+
+```r
+.discover()
+.check()
+.prepare()
+.render()
+```
+
+El prefijo `.` expresa que son funciones privadas del paquete.
+
+No deben utilizarse como puntos de entrada estables desde código externo.
+
+Por ejemplo, esto pertenece a la implementación:
+
+```r
+plan = .discover(plan)
+```
+
+La forma pública de ejecutar el proceso es:
+
+```r
+build()
+```
+
+La diferencia no es meramente estética.
+
+Las funciones privadas pueden cambiar su estructura interna mientras se conserva el contrato de:
+
+```r
+validate()
+build()
+```
+
+## Por qué no se expone cada etapa
+
+Una API con todas las fases públicas obligaría a quien la utiliza a conocer:
+
+```text
+el orden correcto
+los tipos intermedios
+las precondiciones de cada función
+los cambios internos del pipeline
+```
+
+Por ejemplo, no tendría sentido ejecutar `.prepare()` sobre un plan que todavía no ha pasado por `.discover()` y `.check()`.
+
+`build()` conserva esas precondiciones dentro del paquete.
+
+```text
+usuario
+  llama a build()
+
+build()
+  garantiza el orden correcto
+```
+
+Esto reduce la superficie pública sin ocultar el modelo conceptual.
+
+Las etapas siguen existiendo y pueden documentarse, pero no se convierten en obligaciones para quien utiliza el paquete.
+
+## `validate()` frente a `build()`
+
+La elección entre las dos funciones públicas es sencilla.
+
+```text
+validate()
+  reconoce y devuelve un plan inicial
+
+build()
+  ejecuta la construcción completa
+```
+
+Utilice `validate()` cuando necesite comprobar qué representa una ruta:
+
+```r
+plan = validate("workspace")
+```
+
+Utilice `build()` cuando necesite generar la publicación:
+
+```r
+build("workspace")
+```
+
+Con argumentos nombrados, la llamada correcta es:
+
+```r
+build(path = "workspace")
+```
+
+porque el primer argumento de `build()` es `book`, no `path`.
+
+## Llamadas con argumentos nombrados
+
+Para evitar ambigüedades, es recomendable nombrar los argumentos cuando se proporciona una ruta:
+
+```r
+build(path = "workspace")
+```
+
+y no:
+
+```r
+build("workspace")
+```
+
+La segunda expresión se interpreta como:
+
+```r
+book = "workspace"
+```
+
+porque la firma es:
+
+```r
+build(
+  book = NULL,
+  format = NULL,
+  path = "."
+)
+```
+
+Del mismo modo:
+
+```r
+build(
+  book = "user-guide",
+  format = "html",
+  path = "workspace"
+)
+```
+
+hace explícita cada decisión.
+
+## Contrato estable, implementación evolutiva
+
+La API pública protege al usuario de la evolución interna del paquete.
+
+El pipeline puede incorporar en el futuro:
+
+```text
+nuevas comprobaciones
+nuevos artefactos
+nuevos formatos
+nuevas estrategias
+```
+
+sin exigir que el código externo coordine manualmente cada cambio.
+
+La frontera se mantiene pequeña:
+
+```r
+validate()
+build()
+```
+
+> La API pública expresa la intención. El pipeline privado resuelve el procedimiento.

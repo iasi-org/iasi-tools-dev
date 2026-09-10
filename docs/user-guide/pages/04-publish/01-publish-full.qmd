@@ -1,0 +1,26 @@
+---
+title: "Publish full"
+---
+
+Con:
+
+```powershell
+iasi-dev publish -f iasi-quarto
+```
+
+publish llama primero a build y continúa únicamente con los repositorios cuyo build haya terminado correctamente.
+
+El flujo es:
+
+```text
+repositorios
+→ build
+→ repositorios construidos
+→ publish
+→ repositorios publicados
+```
+
+`-f` también se transmite a `iasi.quarto::publish()` como su opción tecnológica de `force`.
+
+Publish sigue sin aceptar una release. El material publicado continúa siendo material generado hasta que se ejecute `release`.
+

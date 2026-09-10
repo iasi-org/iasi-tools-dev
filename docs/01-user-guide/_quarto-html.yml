@@ -1,0 +1,25 @@
+book:
+  llms-txt: true
+  sidebar:
+    collapse-level: 1
+  navbar:
+    title: "IASI Dev"
+    background: primary
+    pinned: true
+    left:
+      - text: "Inicio"
+        href: index.qmd
+  page-footer:
+    left: "IASI Project"
+    right: '<span id="iasi-publish-date"></span>'
+
+format:
+  html:
+    pagetitle: "IASI Dev · Guía de usuario"
+    title-prefix: ""
+    theme:
+      - cosmo
+      - resources/css/iasi.scss
+      - resources/css/guide.scss
+    toc: true
+    number-sections: true

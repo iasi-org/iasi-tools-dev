@@ -1,0 +1,62 @@
+# Modelo mental
+
+La forma general de una llamada es:
+
+```text
+iasi-dev command [flags] [parameters] [targets...]
+```
+
+```{r}
+#| label: tbl-modelo
+#| tbl-cap: "Modelo básico de `iasi-dev`"
+
+model = data.frame(
+  Elemento = c("Command", "Flags", "Parameters", "Targets"),
+  Pregunta = c(
+    "¿Qué quiero hacer?",
+    "¿Cómo quiero modificar la ejecución?",
+    "¿Qué valores adicionales necesita la operación?",
+    "¿Sobre qué elementos de IASI quiero actuar?"
+  )
+)
+
+knitr::kable(model, col.names = c("Elemento", "Pregunta que responde"), align = c("l", "l"))
+```
+
+## Comando
+
+El comando expresa la operación solicitada.
+
+`build`, `publish`, `commit`, `release`, `workflow` y `sync` son operaciones diferentes, pero todas comparten el mismo modelo de invocación.
+
+## Flags y parámetros
+
+Los flags modifican el comportamiento de la ejecución. Algunos parámetros aportan valores, como un mensaje de commit o un formato determinado.
+
+No todos los flags o parámetros tienen necesariamente sentido para todos los comandos.
+
+## Targets
+
+Los targets indican los elementos sobre los que debe aplicarse la operación.
+
+```text
+iasi-dev build iasi-book-I
+```
+
+En esta llamada, `build` es el comando e `iasi-book-I` es el target solicitado.
+
+## Lo solicitado y lo resuelto
+
+`iasi-dev` distingue entre los targets indicados por el usuario y los targets que finalmente debe procesar.
+
+```text
+targets solicitados
+        ↓
+resolución
+        ↓
+targets efectivos
+        ↓
+ejecución
+```
+
+Esta separación permite que cada comando trabaje con targets ya preparados según las reglas de IASI.

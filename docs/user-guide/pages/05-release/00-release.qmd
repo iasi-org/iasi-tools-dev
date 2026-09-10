@@ -1,0 +1,24 @@
+---
+title: "Aceptar una release"
+---
+
+`release` representa una decisión explícita.
+
+```powershell
+iasi-dev release iasi-quarto
+```
+
+significa que el material generado de ese repositorio se considera válido para entrega.
+
+Conceptualmente:
+
+```text
+outputs/
+    ↓ aceptación
+releases/
+```
+
+La promoción debe copiar el material aceptado. `outputs/` sigue existiendo como resultado del trabajo que produjo la release.
+
+Esta frontera es deliberada: la automatización puede generar resultados, pero la aceptación de una entrega sigue siendo explícita.
+

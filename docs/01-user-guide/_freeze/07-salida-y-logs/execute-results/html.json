@@ -1,0 +1,15 @@
+{
+  "hash": "48fa8ba2afaf3a6ef691cd43d8a0de06",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Salida y logs\n\nLa consola y el log responden a necesidades distintas.\n\n\n::: {#tbl-salida-log .cell tbl-cap='Consola y log'}\n::: {.cell-output-display}\n\n\n|Destino |Finalidad                                                               |\n|:-------|:-----------------------------------------------------------------------|\n|Consola |Mostrar al usuario la información adecuada para seguir la ejecución.    |\n|Log     |Conservar el detalle necesario para revisar posteriormente lo ocurrido. |\n\n\n:::\n:::\n\n\nCada ejecución dispone de un log.\n\nCuando `iasi-dev` no necesita analizar la salida de una herramienta externa, sus flujos de salida pueden escribirse directamente en el log.\n\nCuando necesita interpretar el resultado, puede capturar `stdout` y `stderr`, analizarlos y conservar igualmente la información producida.\n\n## Debug\n\nEl modo debug permite seguir decisiones internas relevantes para el diagnóstico.\n\n```text\ntarget\n  ↓\noperación\n  ↓\ncomando externo\n  ↓\nresultado\n  ↓\ndecisión\n```\n\nEl objetivo es que una ejecución pueda reconstruirse como una secuencia comprensible.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

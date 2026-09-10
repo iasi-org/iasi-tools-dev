@@ -1,0 +1,59 @@
+# Primeros pasos
+
+## Mostrar la ayuda
+
+```text
+iasi-dev help
+```
+
+Si se ejecuta `iasi-dev` sin indicar un comando, se muestra igualmente la ayuda.
+
+## Trabajar con un target
+
+```text
+iasi-dev build iasi-book-I
+```
+
+## Trabajar con varios targets
+
+```text
+iasi-dev build iasi-book-I iasi-book-II
+```
+
+## Trabajar desde el contexto actual
+
+```text
+iasi-dev build
+```
+
+o:
+
+```text
+iasi-dev build .
+```
+
+## Aumentar la información mostrada
+
+```{r}
+#| label: tbl-primeros-niveles
+#| tbl-cap: "Niveles habituales de información"
+
+levels = data.frame(
+  Opcion = c("-v", "-V", "-d"),
+  Uso = c(
+    "Mostrar información adicional.",
+    "Mostrar un nivel de detalle mayor.",
+    "Mostrar información destinada al diagnóstico."
+  )
+)
+
+knitr::kable(levels, col.names = c("Opción", "Uso"), align = c("l", "l"))
+```
+
+## Continuar cuando un target falla
+
+```text
+iasi-dev build -t .
+```
+
+El modo tolerante permite excluir un target problemático y continuar con los siguientes cuando esa política sea apropiada.

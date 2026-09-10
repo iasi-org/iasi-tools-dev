@@ -1,0 +1,39 @@
+# Resultados y errores
+
+`iasi-dev` distingue diferentes tipos de resultado.
+
+```{r}
+#| label: tbl-resultados
+#| tbl-cap: "Tipos conceptuales de resultado"
+
+results = data.frame(
+  Resultado = c("OK", "NothingToDo", "Warning", "Skip", "Error", "Severe", "Fatal"),
+  Significado = c(
+    "La operación se ha completado correctamente.",
+    "La operación es válida, pero no existe trabajo pendiente.",
+    "Existe una condición relevante que no impide necesariamente continuar.",
+    "El target deja de participar en el procesamiento actual.",
+    "Se ha producido un error.",
+    "Se ha producido un error de mayor severidad.",
+    "Se ha producido una condición fatal."
+  )
+)
+
+knitr::kable(results, col.names = c("Resultado", "Significado"), align = c("l", "l"))
+```
+
+## Nada que hacer
+
+Un repositorio limpio durante `commit` es un ejemplo típico.
+
+No existe ningún fallo: simplemente no hay trabajo pendiente.
+
+## Skip
+
+`Skip` describe una decisión de procesamiento. Resulta especialmente útil junto con el modo tolerante.
+
+## Normalización de resultados
+
+Las herramientas externas pueden utilizar códigos y convenciones diferentes.
+
+`iasi-dev` interpreta esas diferencias cuando es necesario y ofrece resultados homogéneos al resto de la ejecución. Desde la perspectiva del usuario, esto evita que las peculiaridades de cada herramienta alteren la forma general de trabajar con `iasi-dev`.

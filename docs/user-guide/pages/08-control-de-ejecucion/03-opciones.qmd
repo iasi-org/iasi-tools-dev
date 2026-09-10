@@ -1,0 +1,17 @@
+---
+title: "Opciones habituales"
+---
+
+| Opción | Significado |
+|---|---|
+| `-f` | Full. Ejecuta también la preparación necesaria hasta la fase solicitada. |
+| `-t` | Tolerant. Continúa con otros repositorios después de un fallo. |
+| `-i` | Instala un R package después de construirlo. |
+| `-s` | Silencia la salida de consola. |
+| `-v` | Muestra detalle de artefactos o subproyectos. |
+| `-V` | Muestra también resultados muy detallados. |
+| `--format valor` | Selecciona formato de build Quarto. |
+| `--message valor` | Define el mensaje de commit. |
+
+Los valores de opciones largas pueden escribirse con o sin comillas según lo requiera la shell.
+
